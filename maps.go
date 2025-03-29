@@ -1,6 +1,10 @@
 package vmodutils
 
 func GetIntFromMap(m map[string]interface{}, n string) (int, bool) {
+	if m == nil {
+		return 0, false
+	}
+
 	i, ok := m[n]
 	if !ok {
 		return 0, false
