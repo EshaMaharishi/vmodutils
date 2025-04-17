@@ -13,6 +13,10 @@ type MachineSetup struct {
 	machine, apiKey, apiKeyId string
 }
 
+func (ms *MachineSetup) Valid() bool {
+	return ms.machine != ""
+}
+
 func (ms *MachineSetup) Connect(ctx context.Context, logger logging.Logger) (*client.RobotClient, error) {
 	return client.New(
 		ctx,
