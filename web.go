@@ -25,19 +25,19 @@ func PrepInModuleServer(fs fs.FS, accessLog logging.Logger) (*http.ServeMux, *ht
 	mux.Handle("/", http.FileServerFS(fs))
 
 	webServer := &http.Server{}
-	webServer.Handler = newCookieSetter(&loggingHandler{mux, accessLog})
+	webServer.Handler = newCookieSetter(&loggingHandler{mux, accessLog}, accessLog)
 
 	return mux, webServer, nil
 }
 
 // ----
 
-func newCookieSetter(handler http.Handler) http.Handler {
+func newCookieSetter(handler http.Handler, logger logging.Logger) http.Handler {
 	cs := &cookieSetter{handler: handler}
 
-	cs.prepCookie(utils.MachineFQDNEnvVar, "host")
-	cs.prepCookie(utils.APIKeyIDEnvVar, "api-key-id")
-	cs.prepCookie(utils.APIKeyEnvVar, "api-key")
+	cs.prepCookie(utils.MachineFQDNEnvVar, "host", logger)
+	cs.prepCookie(utils.APIKeyIDEnvVar, "api-key-id", logger)
+	cs.prepCookie(utils.APIKeyEnvVar, "api-key", logger)
 
 	return cs
 }
@@ -47,8 +47,12 @@ type cookieSetter struct {
 	cookies []*http.Cookie
 }
 
-func (cs *cookieSetter) prepCookie(envVarName, cookieName string) {
-	cs.cookies = append(cs.cookies, &http.Cookie{Name: cookieName, Value: os.Getenv(envVarName)})
+func (cs *cookieSetter) prepCookie(envVarName, cookieName string, logger logging.Logger) {
+	v := os.Getenv(envVarName)
+	if v == "" {
+		logger.Warnf("no value for env: %s cookie: %s", envVarName, cookieName)
+	}
+	cs.cookies = append(cs.cookies, &http.Cookie{Name: cookieName, Value: v})
 }
 
 func (cs *cookieSetter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
