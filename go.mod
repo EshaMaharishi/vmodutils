@@ -4,7 +4,7 @@ go 1.23.8
 
 require (
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551
-	go.viam.com/rdk v0.68.1
+	go.viam.com/rdk v0.73.1-0.20250505140427-608c7b61f924
 	go.viam.com/test v1.2.4
 	go.viam.com/utils v0.1.142
 )
@@ -161,5 +161,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
-
-replace go.viam.com/rdk => github.com/erh/rdk v0.0.0-20250504230250-b0250e6b5356
