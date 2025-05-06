@@ -37,7 +37,7 @@ func PrepBoundingRectForSearch() *image.Rectangle {
 func BoundingRectMinMax(r *image.Rectangle, p r3.Vector) {
 	x := int(p.X)
 	y := int(p.Y)
-			
+
 	if x < r.Min.X {
 		r.Min.X = x
 	}
