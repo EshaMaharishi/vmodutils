@@ -15,7 +15,7 @@ func PCDFindHighestInRegion(pc pointcloud.PointCloud, box image.Rectangle) r3.Ve
 	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
 		if p.Z > best.Z {
 			if p.X >= float64(box.Min.X) && p.Y >= float64(box.Min.Y) {
-				if p.X <= float64(box.Max.X) && p.Y >= float64(box.Max.Y) {
+				if p.X <= float64(box.Max.X) && p.Y <= float64(box.Max.Y) {
 					best = p
 				}
 			}
@@ -25,4 +25,30 @@ func PCDFindHighestInRegion(pc pointcloud.PointCloud, box image.Rectangle) r3.Ve
 	})
 
 	return best
+}
+
+func PrepBoundingRectForSearch() *image.Rectangle {
+	return &image.Rectangle{
+		Min: image.Point{1000000, 1000000},
+		Max: image.Point{-1000000, -1000000},
+	}
+}
+
+func BoundingRectMinMax(r *image.Rectangle, p r3.Vector) {
+	x := int(p.X)
+	y := int(p.Y)
+			
+	if x < r.Min.X {
+		r.Min.X = x
+	}
+	if x > r.Max.X {
+		r.Max.X = x
+	}
+	if y < r.Min.Y {
+		r.Min.Y = y
+	}
+	if y > r.Max.Y {
+		r.Max.Y = y
+	}
+
 }
