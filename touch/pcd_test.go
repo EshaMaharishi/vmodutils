@@ -1,7 +1,6 @@
 package touch
 
 import (
-	"fmt"
 	"image"
 	"image/png"
 	"math"
@@ -36,7 +35,7 @@ func TestPCD1(t *testing.T) {
 		return true
 	})
 
-	fmt.Printf("b1 %v -> %v\n", b1, b1.Size())
+	logger.Infof("b1 %v -> %v", b1, b1.Size())
 
 	b2 := PrepBoundingRectForSearch()
 
@@ -55,7 +54,7 @@ func TestPCD1(t *testing.T) {
 
 			if dis < 3 && car > 100 {
 				if x > 400 {
-					fmt.Printf("%v,%v -> %v,%v\n", int(p.X), int(p.Y), x, y)
+					logger.Infof("%v,%v -> %v,%v", int(p.X), int(p.Y), x, y)
 				}
 				img.Set(x, y, d.Color())
 				BoundingRectMinMax(b2, p)
@@ -68,7 +67,7 @@ func TestPCD1(t *testing.T) {
 		return true
 	})
 
-	fmt.Printf("b2 %v %v\n", b2, b2.Size())
+	logger.Infof("b2 %v %v", b2, b2.Size())
 
 	file, err := os.Create("test.png")
 	test.That(t, err, test.ShouldBeNil)
@@ -78,6 +77,26 @@ func TestPCD1(t *testing.T) {
 	test.That(t, err, test.ShouldBeNil)
 
 	h := PCDFindHighestInRegion(pc, *b2)
-	fmt.Printf("hi %v\n", h)
+	logger.Infof("hi %v", h)
+}
+
+func TestPCDCrop(t *testing.T) {
+	a := pointcloud.New()
+	a.Set(r3.Vector{1, 1, 1}, pointcloud.NewBasicData())
+	a.Set(r3.Vector{5, 5, 5}, pointcloud.NewBasicData())
+	a.Set(r3.Vector{9, 9, 9}, pointcloud.NewBasicData())
+
+	test.That(t, a.Size(), test.ShouldEqual, 3)
+	_, got := a.At(1, 1, 1)
+	test.That(t, got, test.ShouldBeTrue)
+	_, got = a.At(5, 5, 5)
+	test.That(t, got, test.ShouldBeTrue)
+
+	b := PCDCrop(a, r3.Vector{2, 2, 2}, r3.Vector{7, 7, 7})
+	test.That(t, b.Size(), test.ShouldEqual, 1)
+	_, got = b.At(1, 1, 1)
+	test.That(t, got, test.ShouldBeFalse)
+	_, got = b.At(5, 5, 5)
+	test.That(t, got, test.ShouldBeTrue)
 
 }

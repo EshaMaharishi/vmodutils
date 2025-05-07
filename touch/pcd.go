@@ -52,3 +52,16 @@ func BoundingRectMinMax(r *image.Rectangle, p r3.Vector) {
 	}
 
 }
+
+func PCDCrop(pc pointcloud.PointCloud, min, max r3.Vector) pointcloud.PointCloud {
+	fixed := pointcloud.New()
+
+	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
+		if p.Cmp(min) > 0 && p.Cmp(max) < 0 {
+			fixed.Set(p, d)
+		}
+		return true
+	})
+
+	return fixed
+}

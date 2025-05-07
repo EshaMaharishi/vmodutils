@@ -1,8 +1,15 @@
 package vmodutils
 
 import (
+	"context"
+	"os"
+
+	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/robot"
 	"go.viam.com/rdk/robot/client"
+	"go.viam.com/rdk/utils"
+	"go.viam.com/utils/rpc"
 )
 
 func MachineToDependencies(client *client.RobotClient) (resource.Dependencies, error) {
@@ -18,4 +25,26 @@ func MachineToDependencies(client *client.RobotClient) (resource.Dependencies, e
 	}
 
 	return deps, nil
+}
+
+func ConnectToMachineFromEnv(ctx context.Context, logger logging.Logger) (robot.Robot, error) {
+	host := os.Getenv(utils.MachineFQDNEnvVar)
+	apiKeyId := os.Getenv(utils.APIKeyIDEnvVar)
+	apiKey := os.Getenv(utils.APIKeyEnvVar)
+	return ConnectToMachine(ctx, logger, host, apiKeyId, apiKey)
+}
+
+func ConnectToMachine(ctx context.Context, logger logging.Logger, host, apiKeyId, apiKey string) (robot.Robot, error) {
+	return client.New(
+		ctx,
+		host,
+		logger,
+		client.WithDialOptions(rpc.WithEntityCredentials(
+			apiKeyId,
+			rpc.Credentials{
+				Type:    rpc.CredentialsTypeAPIKey,
+				Payload: apiKey,
+			},
+		)),
+	)
 }

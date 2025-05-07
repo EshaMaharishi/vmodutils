@@ -1,0 +1,29 @@
+{
+  "$schema": "https://dl.viam.dev/module.schema.json",
+  "module_id": "erh:vmodutils",
+  "visibility": "public",
+  "url": "http://github.com/erh/vmodutils/",
+  "description": "random utilities",
+  "models": [
+    {
+        "api": "rdk:component:camera",
+        "model": "erh:vmodutils:pcd-crop-camera",
+        "markdown_link": "README.md#pcd-crop-camera",
+        "short_description": "crops a pointcloud"
+
+    }
+  ],
+  "applications": null,
+  "entrypoint": "./bin/vmodutils",
+  "first_run": "",
+  "build": {
+    "build": "make module",
+    "setup": "",
+    "path": "module.tar.gz",
+    "arch": [
+      "linux/amd64",
+      "linux/arm64",
+      "darwin/arm64"
+    ]
+  }
+}
