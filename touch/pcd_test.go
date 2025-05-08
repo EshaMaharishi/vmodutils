@@ -103,3 +103,18 @@ func TestPCDCrop(t *testing.T) {
 	test.That(t, got, test.ShouldBeTrue)
 
 }
+
+func TestPCDCup1(t *testing.T) {
+	logger := logging.NewTestLogger(t)
+
+	pc, err := pointcloud.NewRoundingPointCloudFromFile("data/cup1.pcd", logger)
+	test.That(t, err, test.ShouldBeNil)
+
+	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
+		logger.Infof("%v", p)
+		return true
+	})
+
+	t.Fail()
+
+}
