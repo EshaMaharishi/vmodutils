@@ -27,9 +27,10 @@ func init() {
 }
 
 type CropCameraConfig struct {
-	Src string
-	Min r3.Vector
-	Max r3.Vector
+	Src      string
+	SrcFrame string `json:"src_frame"`
+	Min      r3.Vector
+	Max      r3.Vector
 }
 
 func (ccc *CropCameraConfig) Validate(path string) ([]string, error) {
@@ -95,7 +96,12 @@ func (cc *cropCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud
 		return nil, err
 	}
 
-	pc, err = cc.client.TransformPointCloud(ctx, pc, cc.cfg.Src, "world")
+	srcFrame := cc.cfg.Src
+	if cc.cfg.SrcFrame != "" {
+		srcFrame = cc.cfg.SrcFrame
+	}
+
+	pc, err = cc.client.TransformPointCloud(ctx, pc, srcFrame, "world")
 	if err != nil {
 		return nil, err
 	}
