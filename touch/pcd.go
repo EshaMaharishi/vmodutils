@@ -53,11 +53,27 @@ func BoundingRectMinMax(r *image.Rectangle, p r3.Vector) {
 
 }
 
+func InBox(pt, min, max r3.Vector) bool {
+	if pt.X < min.X || pt.X > max.X {
+		return false
+	}
+
+	if pt.Y < min.Y || pt.Y > max.Y {
+		return false
+	}
+
+	if pt.Z < min.Z || pt.Z > max.Z {
+		return false
+	}
+
+	return true
+}
+
 func PCDCrop(pc pointcloud.PointCloud, min, max r3.Vector) pointcloud.PointCloud {
 	fixed := pointcloud.New()
 
 	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
-		if p.Cmp(min) > 0 && p.Cmp(max) < 0 {
+		if InBox(p, min, max) {
 			fixed.Set(p, d)
 		}
 		return true

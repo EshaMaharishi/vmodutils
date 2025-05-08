@@ -85,11 +85,14 @@ func TestPCDCrop(t *testing.T) {
 	a.Set(r3.Vector{1, 1, 1}, pointcloud.NewBasicData())
 	a.Set(r3.Vector{5, 5, 5}, pointcloud.NewBasicData())
 	a.Set(r3.Vector{9, 9, 9}, pointcloud.NewBasicData())
+	a.Set(r3.Vector{5, 0, 5}, pointcloud.NewBasicData())
 
-	test.That(t, a.Size(), test.ShouldEqual, 3)
+	test.That(t, a.Size(), test.ShouldEqual, 4)
 	_, got := a.At(1, 1, 1)
 	test.That(t, got, test.ShouldBeTrue)
 	_, got = a.At(5, 5, 5)
+	test.That(t, got, test.ShouldBeTrue)
+	_, got = a.At(5, 0, 5)
 	test.That(t, got, test.ShouldBeTrue)
 
 	b := PCDCrop(a, r3.Vector{2, 2, 2}, r3.Vector{7, 7, 7})
