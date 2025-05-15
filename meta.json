@@ -7,7 +7,7 @@
   "models": [
     {
         "api": "rdk:component:camera",
-        "model": "erh:vmodutils:pcd-crop-camera",
+        "model": "erh:vmodutils:pc-crop-camera",
         "markdown_link": "README.md#pcd-crop-camera",
         "short_description": "crops a pointcloud"
 

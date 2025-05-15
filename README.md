@@ -5,7 +5,7 @@
 </a>
 </p>
 
-## pcd crop camera
+## pc crop camera
 ```
 {
   "src" : "<cam>",

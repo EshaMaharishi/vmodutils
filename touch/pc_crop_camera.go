@@ -15,7 +15,7 @@ import (
 	"github.com/erh/vmodutils"
 )
 
-var CropCameraModel = vmodutils.NamespaceFamily.WithModel("pcd-crop-camera")
+var CropCameraModel = vmodutils.NamespaceFamily.WithModel("pc-crop-camera")
 
 func init() {
 	resource.RegisterComponent(
