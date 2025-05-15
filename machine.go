@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"go.viam.com/rdk/cli"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/robot"
@@ -46,5 +47,24 @@ func ConnectToMachine(ctx context.Context, logger logging.Logger, host, apiKeyId
 				Payload: apiKey,
 			},
 		)),
+	)
+}
+
+func ConnectToHostFromCLIToken(ctx context.Context, host string, logger logging.Logger) (robot.Robot, error) {
+	c, err := cli.ConfigFromCache(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	dopts, err := c.DialOptions()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.New(
+		ctx,
+		host,
+		logger,
+		client.WithDialOptions(dopts...),
 	)
 }
