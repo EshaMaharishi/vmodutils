@@ -33,11 +33,11 @@ type CropCameraConfig struct {
 	Max      r3.Vector
 }
 
-func (ccc *CropCameraConfig) Validate(path string) ([]string, error) {
+func (ccc *CropCameraConfig) Validate(path string) ([]string, []string, error) {
 	if ccc.Src == "" {
-		return nil, fmt.Errorf("need a src camera")
+		return nil, nil, fmt.Errorf("need a src camera")
 	}
-	return []string{ccc.Src}, nil
+	return []string{ccc.Src}, nil, nil
 }
 
 func newCropCamera(ctx context.Context, deps resource.Dependencies, config resource.Config, logger logging.Logger) (camera.Camera, error) {

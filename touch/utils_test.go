@@ -18,17 +18,18 @@ import (
 func TestPCD1(t *testing.T) {
 	logger := logging.NewTestLogger(t)
 
-	pc, err := pointcloud.NewFromFile("data/test.pcd", logger)
+	in, err := pointcloud.NewFromFile("data/test.pcd", "")
 	test.That(t, err, test.ShouldBeNil)
 
 	cleaner, err := pointcloud.StatisticalOutlierFilter(50, 1)
 	test.That(t, err, test.ShouldBeNil)
 
-	pc, err = cleaner(pc)
+	out := pointcloud.NewBasicEmpty()
+	err = cleaner(in, out)
 	test.That(t, err, test.ShouldBeNil)
 
 	b1 := PrepBoundingRectForSearch()
-	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
+	out.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
 		if math.Abs(p.Z) < 10 && d.HasColor() {
 			BoundingRectMinMax(b1, p)
 		}
@@ -40,7 +41,7 @@ func TestPCD1(t *testing.T) {
 	b2 := PrepBoundingRectForSearch()
 
 	img := image.NewRGBA(image.Rectangle{Max: b1.Size()})
-	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
+	out.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
 		if math.Abs(p.Z) < 25 && d.HasColor() {
 			x := int(p.X)
 			y := int(p.Y)
@@ -76,12 +77,12 @@ func TestPCD1(t *testing.T) {
 	err = png.Encode(file, img)
 	test.That(t, err, test.ShouldBeNil)
 
-	h := PCDFindHighestInRegion(pc, *b2)
+	h := PCDFindHighestInRegion(out, *b2)
 	logger.Infof("hi %v", h)
 }
 
 func TestPCDCrop(t *testing.T) {
-	a := pointcloud.New()
+	a := pointcloud.NewBasicEmpty()
 	a.Set(r3.Vector{1, 1, 1}, pointcloud.NewBasicData())
 	a.Set(r3.Vector{5, 5, 5}, pointcloud.NewBasicData())
 	a.Set(r3.Vector{9, 9, 9}, pointcloud.NewBasicData())
@@ -101,20 +102,5 @@ func TestPCDCrop(t *testing.T) {
 	test.That(t, got, test.ShouldBeFalse)
 	_, got = b.At(5, 5, 5)
 	test.That(t, got, test.ShouldBeTrue)
-
-}
-
-func TestPCDCup1(t *testing.T) {
-	logger := logging.NewTestLogger(t)
-
-	pc, err := pointcloud.NewRoundingPointCloudFromFile("data/cup1.pcd", logger)
-	test.That(t, err, test.ShouldBeNil)
-
-	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
-		logger.Infof("%v", p)
-		return true
-	})
-
-	t.Fail()
 
 }

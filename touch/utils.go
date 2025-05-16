@@ -70,7 +70,7 @@ func InBox(pt, min, max r3.Vector) bool {
 }
 
 func PCDCrop(pc pointcloud.PointCloud, min, max r3.Vector) pointcloud.PointCloud {
-	fixed := pointcloud.New()
+	fixed := pointcloud.NewBasicEmpty()
 
 	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
 		if InBox(p, min, max) {
