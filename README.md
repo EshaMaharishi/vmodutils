@@ -9,9 +9,9 @@
 ```
 {
   "src" : "<cam>",
-  "src_frame" : <optional>,
-  "min" : { "X" : 0, "Y" : 0, "Z" : 0},
-  "min" : { "X" : 9, "Y" : 9, "Z" : 9}
+  "src_frame" : <optional>, // src point cloud will be converted to world from this, if not specified assume it is world
+  "min" : { "X" : 0, "Y" : 0, "Z" : 0}, // specified in world frame
+  "min" : { "X" : 9, "Y" : 9, "Z" : 9}  // specified in world frame
 }
   
 ```
