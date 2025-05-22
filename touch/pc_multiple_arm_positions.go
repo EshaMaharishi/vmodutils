@@ -33,7 +33,12 @@ func (c *MultipleArmPosesConfig) Validate(path string) ([]string, []string, erro
 	if c.Src == "" {
 		return nil, nil, fmt.Errorf("need a src camera")
 	}
-	return []string{c.Src}, nil, nil
+
+	if len(c.Positions) == 0 {
+		return nil, nil, fmt.Errorf("no positions")
+	}
+
+	return append(c.Positions, c.Src), nil, nil
 }
 
 func newMultipleArmPoses(ctx context.Context, deps resource.Dependencies, config resource.Config, logger logging.Logger) (camera.Camera, error) {
