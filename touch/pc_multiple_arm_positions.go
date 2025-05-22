@@ -3,6 +3,7 @@ package touch
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.viam.com/rdk/components/camera"
 	"go.viam.com/rdk/components/switch"
@@ -25,8 +26,16 @@ func init() {
 }
 
 type MultipleArmPosesConfig struct {
-	Src       string
-	Positions []string
+	Src          string
+	SleepSeconds float64 `json:"sleep_seconds"`
+	Positions    []string
+}
+
+func (c *MultipleArmPosesConfig) sleepTime() time.Duration {
+	if c.SleepSeconds <= 0 {
+		return time.Second
+	}
+	return time.Duration(c.SleepSeconds * float64(time.Second))
 }
 
 func (c *MultipleArmPosesConfig) Validate(path string) ([]string, []string, error) {
@@ -106,6 +115,8 @@ func (mapc *MultipleArmPosesCamera) NextPointCloud(ctx context.Context) (pointcl
 		if err != nil {
 			return nil, err
 		}
+
+		time.Sleep(mapc.cfg.sleepTime())
 
 		pc, err := mapc.src.NextPointCloud(ctx)
 		if err != nil {
