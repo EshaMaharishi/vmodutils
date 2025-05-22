@@ -12,6 +12,13 @@
         "short_description": "crops a pointcloud"
     },
     {
+        "api": "rdk:component:camera",
+        "model": "erh:vmodutils:pc-multiple-arm-poses",
+        "markdown_link": "README.md#pc-multiple-arm-poses",
+        "short_description": "moves an arm to multiple positions and merges pointcloud"
+    },
+
+    {
         "api": "rdk:component:switch",
         "model": "erh:vmodutils:arm-position-saver",
         "markdown_link": "README.md#arm-position-saver",

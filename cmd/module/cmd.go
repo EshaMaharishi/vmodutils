@@ -12,6 +12,7 @@ import (
 func main() {
 	module.ModularMain(
 		resource.APIModel{camera.API, touch.CropCameraModel},
+		resource.APIModel{camera.API, touch.MultipleArmPosesModel},
 		resource.APIModel{toggleswitch.API, touch.ArmPositionSaverModel},
 	)
 

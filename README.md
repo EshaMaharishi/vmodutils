@@ -26,3 +26,10 @@
 
 
 
+## pc multiple arm poses
+```
+{
+ "src" : "<name of camera>",
+ "positions" : [ <arm-position-saver>, ... ]
+ }
+```
