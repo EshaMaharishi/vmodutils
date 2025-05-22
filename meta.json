@@ -10,7 +10,12 @@
         "model": "erh:vmodutils:pc-crop-camera",
         "markdown_link": "README.md#pc-crop-camera",
         "short_description": "crops a pointcloud"
-
+    },
+    {
+        "api": "rdk:component:switch",
+        "model": "erh:vmodutils:arm-position-saver",
+        "markdown_link": "README.md#arm-position-saver",
+        "short_description": "saves an arm position and let's you go there"
     }
   ],
   "applications": null,

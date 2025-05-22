@@ -15,3 +15,14 @@
 }
   
 ```
+
+## arm position saver
+```
+{
+    "arm" : "<name of arm>",
+    "joints" : [ ] // set automatically
+}
+```
+
+
+
