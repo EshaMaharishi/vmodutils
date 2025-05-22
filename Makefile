@@ -17,3 +17,6 @@ module: bin/vmodutils
 
 bin:
 	-mkdir bin
+
+setup:
+	brew install nlopt-static || sudo apt install -y libnlopt-dev 
