@@ -35,6 +35,7 @@
 ```
 
 ## obstacle
+Configure this with a frame and you can have obstacles on your robot without having to hard code.
 ```
 {
  "geometries" : [ { "type" : "box", "x" : 100, "y": 100, "z" : 100 } ]
