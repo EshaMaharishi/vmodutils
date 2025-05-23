@@ -17,13 +17,19 @@
         "markdown_link": "README.md#pc-multiple-arm-poses",
         "short_description": "moves an arm to multiple positions and merges pointcloud"
     },
-
     {
         "api": "rdk:component:switch",
         "model": "erh:vmodutils:arm-position-saver",
         "markdown_link": "README.md#arm-position-saver",
         "short_description": "saves an arm position and let's you go there"
+    },
+    {
+        "api": "rdk:component:gripper",
+        "model": "erh:vmodutils:obstacle",
+        "markdown_link": "README.md#obstacle",
+        "short_description": "obstacle, doesn't do anything but get in the way"
     }
+
   ],
   "applications": null,
   "entrypoint": "./bin/vmodutils",

@@ -33,3 +33,12 @@
  "positions" : [ <arm-position-saver>, ... ]
  }
 ```
+
+## obstacle
+```
+{
+ "geometries" : [ { "type" : "box", "x" : 100, "y": 100, "z" : 100 } ]
+ "geometries" : [ { "type" : "sphere", "r" : 100 } ]
+
+}
+```
