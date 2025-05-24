@@ -60,6 +60,10 @@ func ConnectToMachine(ctx context.Context, logger logging.Logger, host, apiKeyId
 // ConnectToHostFromCLIToken uses the viam cli token to login to a machine with just a hostname.
 // use "viam login" to setup the token.
 func ConnectToHostFromCLIToken(ctx context.Context, host string, logger logging.Logger) (robot.Robot, error) {
+	if host == "" {
+		return nil, fmt.Errorf("need to specify host")
+	}
+
 	c, err := cli.ConfigFromCache(nil)
 	if err != nil {
 		return nil, err
