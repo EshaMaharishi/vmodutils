@@ -15,7 +15,7 @@ import (
 	"go.viam.com/utils/rpc"
 )
 
-func MachineToDependencies(client *client.RobotClient) (resource.Dependencies, error) {
+func MachineToDependencies(client robot.Robot) (resource.Dependencies, error) {
 	deps := resource.Dependencies{}
 
 	names := client.ResourceNames()
