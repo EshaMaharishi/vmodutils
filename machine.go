@@ -119,10 +119,8 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 		if ccc["name"] != name.ShortName() {
 			continue
 		}
-		fmt.Printf("c %d %v %T\n", idx, ccc, ccc)
+
 		ccc["attributes"] = newAttr
-		fmt.Printf("c %d %v %T\n", idx, ccc, ccc)
-		cs[idx] = ccc
 		found = true
 	}
 
