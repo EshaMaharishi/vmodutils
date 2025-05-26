@@ -106,7 +106,7 @@ func TestPCDCrop(t *testing.T) {
 }
 
 func TestPCProject1(t *testing.T) {
-	in, err := pointcloud.NewFromFile("data/test.pcd", "")
+	in, err := pointcloud.NewFromFile("data/cup1.pcd", "")
 	test.That(t, err, test.ShouldBeNil)
 
 	img := PCToImage(in)
