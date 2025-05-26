@@ -104,3 +104,18 @@ func TestPCDCrop(t *testing.T) {
 	test.That(t, got, test.ShouldBeTrue)
 
 }
+
+func TestPCProject1(t *testing.T) {
+	in, err := pointcloud.NewFromFile("data/test.pcd", "")
+	test.That(t, err, test.ShouldBeNil)
+
+	img := PCToImage(in)
+
+	file, err := os.Create("projecttest1.png")
+	test.That(t, err, test.ShouldBeNil)
+	defer file.Close()
+
+	err = png.Encode(file, img)
+	test.That(t, err, test.ShouldBeNil)
+
+}

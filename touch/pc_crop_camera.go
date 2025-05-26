@@ -3,6 +3,7 @@ package touch
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/golang/geo/r3"
 
@@ -10,6 +11,7 @@ import (
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/rimage"
 	"go.viam.com/rdk/robot"
 
 	"github.com/erh/vmodutils"
@@ -79,11 +81,28 @@ func (cc *cropCamera) Name() resource.Name {
 }
 
 func (cc *cropCamera) Image(ctx context.Context, mimeType string, extra map[string]interface{}) ([]byte, camera.ImageMetadata, error) {
-	return nil, camera.ImageMetadata{}, fmt.Errorf("image not supported")
+	pc, err := cc.NextPointCloud(ctx)
+	if err != nil {
+		return nil, camera.ImageMetadata{}, err
+	}
+	img := PCToImage(pc)
+
+	data, err := rimage.EncodeImage(ctx, img, mimeType)
+	if err != nil {
+		return nil, camera.ImageMetadata{}, err
+	}
+
+	return data, camera.ImageMetadata{mimeType}, err
 }
 
 func (cc *cropCamera) Images(ctx context.Context) ([]camera.NamedImage, resource.ResponseMetadata, error) {
-	return nil, resource.ResponseMetadata{}, fmt.Errorf("image not supported")
+	pc, err := cc.NextPointCloud(ctx)
+	if err != nil {
+		return nil, resource.ResponseMetadata{}, err
+	}
+	img := PCToImage(pc)
+
+	return []camera.NamedImage{{img, "cropped"}}, resource.ResponseMetadata{time.Now()}, nil
 }
 
 func (cc *cropCamera) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {

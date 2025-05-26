@@ -1,7 +1,9 @@
 package touch
 
 import (
+	"fmt"
 	"image"
+	"math"
 
 	"github.com/golang/geo/r3"
 
@@ -80,4 +82,39 @@ func PCDCrop(pc pointcloud.PointCloud, min, max r3.Vector) pointcloud.PointCloud
 	})
 
 	return fixed
+}
+
+func PCToImage(pc pointcloud.PointCloud) image.Image {
+
+	md := pc.MetaData()
+
+	img := image.NewRGBA(image.Rect(
+		int(math.Floor(md.MinX)),
+		int(math.Floor(md.MinY)),
+		int(math.Ceil(md.MaxX)),
+		int(math.Ceil(md.MaxY)),
+	))
+
+	bestZ := map[string]float64{}
+
+	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
+		x := int(p.X)
+		y := int(p.Y)
+
+		key := fmt.Sprintf("%d-%d", x, y)
+		oldZ, ok := bestZ[key]
+		if ok {
+			if p.Z < oldZ {
+				return true
+			}
+		}
+
+		img.Set(x, y, d.Color())
+
+		bestZ[key] = p.Z
+
+		return true
+	})
+
+	return img
 }
