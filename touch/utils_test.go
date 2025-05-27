@@ -119,3 +119,13 @@ func TestPCProject1(t *testing.T) {
 	test.That(t, err, test.ShouldBeNil)
 
 }
+
+func TestPCStats(t *testing.T) {
+	in, err := pointcloud.NewFromFile("data/cup2onlycup.pcd", "")
+	test.That(t, err, test.ShouldBeNil)
+
+	md := in.MetaData()
+	test.That(t, md.MaxSideLength(), test.ShouldBeGreaterThan, 100)
+	test.That(t, md.MaxSideLength(), test.ShouldBeLessThan, 110)
+
+}
