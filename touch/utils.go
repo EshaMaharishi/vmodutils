@@ -110,8 +110,12 @@ func PCToImage(pc pointcloud.PointCloud) image.Image {
 		r.Max.Y += yScale
 	}
 
-	if r.Max.X <= 0 || r.Max.Y <= 0 {
-		return image.White
+	if r.Max.X <= 0 {
+		r.Max.X = 1
+	}
+
+	if r.Max.Y <= 0 {
+		r.Max.Y = 1
 	}
 
 	img := image.NewRGBA(r)
