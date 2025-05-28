@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/golang/geo/r3"
+
 	"go.viam.com/rdk/components/arm"
 	"go.viam.com/rdk/components/switch"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/referenceframe"
 	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/services/motion"
+	"go.viam.com/rdk/spatialmath"
 	"go.viam.com/rdk/utils"
 
 	"github.com/erh/vmodutils"
@@ -26,15 +30,29 @@ func init() {
 }
 
 type ArmPositionSaverConfig struct {
-	Arm    string
-	Joints []float64
+	Arm         string
+	Joints      []float64
+	Motion      string
+	Point       r3.Vector
+	Orientation spatialmath.OrientationVectorDegrees
 }
 
 func (c *ArmPositionSaverConfig) Validate(path string) ([]string, []string, error) {
 	if c.Arm == "" {
 		return nil, nil, fmt.Errorf("no arm specificed")
 	}
-	return []string{c.Arm}, nil, nil
+
+	deps := []string{c.Arm}
+
+	if c.Motion != "" {
+		if c.Motion == "builtin" {
+			deps = append(deps, motion.Named("builtin").String())
+		} else {
+			deps = append(deps, c.Motion)
+		}
+	}
+
+	return deps, nil, nil
 }
 
 func newArmPositionSaver(ctx context.Context, deps resource.Dependencies, config resource.Config, logger logging.Logger) (toggleswitch.Switch, error) {
@@ -48,12 +66,21 @@ func newArmPositionSaver(ctx context.Context, deps resource.Dependencies, config
 		return nil, err
 	}
 
-	return &ArmPositionSaver{
+	aps := &ArmPositionSaver{
 		name:   config.ResourceName(),
 		cfg:    newConf,
 		logger: logger,
 		arm:    arm,
-	}, nil
+	}
+
+	if newConf.Motion != "" {
+		aps.motion, err = motion.FromDependencies(deps, newConf.Motion)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return aps, nil
 }
 
 type ArmPositionSaver struct {
@@ -64,7 +91,8 @@ type ArmPositionSaver struct {
 	cfg    *ArmPositionSaverConfig
 	logger logging.Logger
 
-	arm arm.Arm
+	arm    arm.Arm
+	motion motion.Service
 }
 
 func (aps *ArmPositionSaver) Name() resource.Name {
@@ -100,19 +128,56 @@ func (aps *ArmPositionSaver) GetNumberOfPositions(ctx context.Context, extra map
 }
 
 func (aps *ArmPositionSaver) saveCurrentPosition(ctx context.Context) error {
-	inputs, err := aps.arm.JointPositions(ctx, nil)
-	if err != nil {
-		return err
+	newConfig := utils.AttributeMap{
+		"arm": aps.cfg.Arm,
 	}
 
-	newConfig := utils.AttributeMap{
-		"arm":    aps.cfg.Arm,
-		"joints": referenceframe.InputsToFloats(inputs),
+	if aps.cfg.Motion == "" {
+		inputs, err := aps.arm.JointPositions(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		newConfig["joints"] = referenceframe.InputsToFloats(inputs)
+	} else {
+		p, err := aps.motion.GetPose(ctx, aps.arm.Name(), "world", nil, nil)
+		if err != nil {
+			return err
+		}
+		newConfig["point"] = p.Pose().Point()
+		newConfig["orientation"] = p.Pose().Orientation().OrientationVectorDegrees()
 	}
 
 	return vmodutils.UpdateComponentCloudAttributesFromModuleEnv(ctx, aps.name, newConfig, aps.logger)
 }
 
 func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
-	return aps.arm.MoveToJointPositions(ctx, referenceframe.FloatsToInputs(aps.cfg.Joints), nil)
+	if len(aps.cfg.Joints) > 0 {
+		return aps.arm.MoveToJointPositions(ctx, referenceframe.FloatsToInputs(aps.cfg.Joints), nil)
+	}
+
+	if aps.motion != nil {
+		pif := referenceframe.NewPoseInFrame(
+			"world",
+			spatialmath.NewPose(aps.cfg.Point, &aps.cfg.Orientation),
+		)
+
+		done, err := aps.motion.Move(
+			ctx,
+			motion.MoveReq{
+				ComponentName: resource.Name{Name: aps.cfg.Arm},
+				Destination:   pif,
+				WorldState:    nil,
+			},
+		)
+		if err != nil {
+			return err
+		}
+		if !done {
+			return fmt.Errorf("move didn't finish")
+		}
+		return nil
+	}
+
+	return fmt.Errorf("need to configure where to go")
 }

@@ -19,8 +19,11 @@
 ## arm position saver
 ```
 {
-    "arm" : "<name of arm>",
-    "joints" : [ ] // set automatically
+    "arm" : "<name of arm>", // required
+    "motion" : "<name of motion service>", // optional - if used uses post not joines
+    "joints" : [ ], // set automatically
+    "point" : < ... >,
+    "orientation" : < ... >
 }
 ```
 
