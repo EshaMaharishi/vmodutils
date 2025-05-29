@@ -35,6 +35,7 @@ type ArmPositionSaverConfig struct {
 	Motion      string
 	Point       r3.Vector
 	Orientation spatialmath.OrientationVectorDegrees
+	Extra       map[string]interface{}
 }
 
 func (c *ArmPositionSaverConfig) Validate(path string) ([]string, []string, error) {
@@ -154,7 +155,7 @@ func (aps *ArmPositionSaver) saveCurrentPosition(ctx context.Context) error {
 
 func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
 	if len(aps.cfg.Joints) > 0 {
-		return aps.arm.MoveToJointPositions(ctx, referenceframe.FloatsToInputs(aps.cfg.Joints), nil)
+		return aps.arm.MoveToJointPositions(ctx, referenceframe.FloatsToInputs(aps.cfg.Joints), aps.cfg.Extra)
 	}
 
 	if aps.motion != nil {
@@ -183,6 +184,7 @@ func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
 				ComponentName: resource.Name{Name: aps.cfg.Arm},
 				Destination:   pif,
 				WorldState:    nil,
+				Extra:         aps.cfg.Extra,
 			},
 		)
 		if err != nil {
