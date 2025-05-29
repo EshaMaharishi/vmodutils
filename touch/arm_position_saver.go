@@ -158,6 +158,20 @@ func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
 	}
 
 	if aps.motion != nil {
+		current, err := aps.motion.GetPose(ctx, aps.arm.Name(), "world", nil, nil)
+		if err != nil {
+			return err
+		}
+
+		linearDelta := current.Pose().Point().Distance(aps.cfg.Point)
+		orientationDelta := spatialmath.QuatToR3AA(spatialmath.OrientationBetween(current.Pose().Orientation(), &aps.cfg.Orientation).Quaternion()).Norm2()
+
+		aps.logger.Debugf("goToSavePosition linearDelta: %v orientationDelta: %v", linearDelta, orientationDelta)
+		if linearDelta < .1 && orientationDelta < .01 {
+			aps.logger.Debugf("close enough, not moving - linearDelta: %v orientationDelta: %v", linearDelta, orientationDelta)
+			return nil
+		}
+
 		pif := referenceframe.NewPoseInFrame(
 			"world",
 			spatialmath.NewPose(aps.cfg.Point, &aps.cfg.Orientation),
