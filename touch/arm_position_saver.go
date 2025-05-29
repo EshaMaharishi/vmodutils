@@ -129,7 +129,8 @@ func (aps *ArmPositionSaver) GetNumberOfPositions(ctx context.Context, extra map
 
 func (aps *ArmPositionSaver) saveCurrentPosition(ctx context.Context) error {
 	newConfig := utils.AttributeMap{
-		"arm": aps.cfg.Arm,
+		"arm":    aps.cfg.Arm,
+		"motion": aps.cfg.Motion,
 	}
 
 	if aps.cfg.Motion == "" {

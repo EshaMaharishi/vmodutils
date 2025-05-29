@@ -13,6 +13,13 @@
     },
     {
         "api": "rdk:component:camera",
+        "model": "erh:vmodutils:pc-merge",
+        "markdown_link": "README.md#pc-merge",
+        "short_description": "merges pointclouds"
+    },
+
+    {
+        "api": "rdk:component:camera",
         "model": "erh:vmodutils:pc-multiple-arm-poses",
         "markdown_link": "README.md#pc-multiple-arm-poses",
         "short_description": "moves an arm to multiple positions and merges pointcloud"

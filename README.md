@@ -15,6 +15,12 @@
 }
   
 ```
+## pc merge
+```
+{
+  "cameras" : ["<cam>"]
+}
+```
 
 ## arm position saver
 ```
