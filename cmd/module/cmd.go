@@ -17,6 +17,7 @@ func main() {
 		resource.APIModel{camera.API, touch.MultipleArmPosesModel},
 		resource.APIModel{toggleswitch.API, touch.ArmPositionSaverModel},
 		resource.APIModel{gripper.API, touch.ObstacleModel},
+		resource.APIModel{gripper.API, touch.SingleArmModel},
 	)
 
 }

@@ -35,8 +35,13 @@
         "model": "erh:vmodutils:obstacle",
         "markdown_link": "README.md#obstacle",
         "short_description": "obstacle, doesn't do anything but get in the way"
+    },
+    {
+        "api": "rdk:service:motion",
+        "model": "erh:vmodutils:single-arm-motion-service",
+        "markdown_link": "README.md#single-arm-motion-service",
+        "short_description": "single arm motion service"
     }
-
   ],
   "applications": null,
   "entrypoint": "./bin/vmodutils",
