@@ -121,5 +121,5 @@ func (g *Obstacle) GoToInputs(ctx context.Context, inputs ...[]referenceframe.In
 }
 
 func (g *Obstacle) Kinematics(ctx context.Context) (referenceframe.Model, error) {
-	return g.ModelFrame(), nil
+	return g.ModelFrame(), fmt.Errorf("for now Kinematics errors to work around bug?")
 }
