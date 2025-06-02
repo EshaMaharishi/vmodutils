@@ -6,6 +6,7 @@ import (
 
 	"go.viam.com/rdk/referenceframe"
 	"go.viam.com/rdk/services/motion"
+	"go.viam.com/rdk/spatialmath"
 )
 
 func HashString(s string) int {
@@ -44,7 +45,13 @@ func HashPoseInFrame(pif *referenceframe.PoseInFrame) int {
 	hash += HashString(pif.Name())
 	hash += HashString(pif.Parent())
 
-	p := pif.Pose()
+	hash += HashPose(pif.Pose())
+
+	return hash
+}
+
+func HashPose(p spatialmath.Pose) int {
+	hash := 0
 
 	pp := p.Point()
 
@@ -53,9 +60,9 @@ func HashPoseInFrame(pif *referenceframe.PoseInFrame) int {
 	hash += (7 * (int(pp.Z*10) + 2124)) * 4
 
 	o := p.Orientation().OrientationVectorDegrees()
-	hash += (8 * (int(o.OX*10) + 2313)) * 5
-	hash += (9 * (int(o.OY*10) + 3133)) * 6
-	hash += (10 * (int(o.OZ*10) + 2931)) * 7
+	hash += (8 * (int(o.OX*100) + 2313)) * 5
+	hash += (9 * (int(o.OY*100) + 3133)) * 6
+	hash += (10 * (int(o.OZ*100) + 2931)) * 7
 	hash += (11 * (int(o.Theta*10) + 6315)) * 8
 
 	return hash

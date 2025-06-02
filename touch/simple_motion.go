@@ -171,12 +171,12 @@ func (s *singleArmService) getPlan(ctx context.Context, req motion.MoveReq, fs *
 	myPlan, ok := fs.plans[planHash]
 	fs.plansLock.Unlock()
 
+	s.logger.Infof("getPlan \n\t hash: %v ok: %v \n\t start: %v \n\t dest: %v", planHash, ok, startJoints, req.Destination)
+
 	if ok {
 		s.logger.Infof("using cached plan %v", planHash)
 		return myPlan, nil
 	}
-
-	s.logger.Infof("creating new cache entry for \n\t hash: %v \n\t start: %v \n\t dest: %v", planHash, startJoints, req.Destination)
 
 	myPlan, err := s.createPlan(ctx, req, fs.fs, startJoints)
 	if err != nil {
