@@ -139,7 +139,7 @@ func (s *singleArmService) Move(ctx context.Context, req motion.MoveReq) (bool, 
 		Logger:      s.logger,
 		FrameSystem: myFs,
 		Goals: []*motionplan.PlanState{
-			motionplan.NewPlanState(referenceframe.FrameSystemPoses{s.cfg.Arm: req.Destination}, nil),
+			motionplan.NewPlanState(referenceframe.FrameSystemPoses{req.ComponentName.ShortName(): req.Destination}, nil),
 		},
 		StartState: motionplan.NewPlanState(nil, referenceframe.FrameSystemInputs{s.cfg.Arm: startJoints}),
 		WorldState: req.WorldState,
