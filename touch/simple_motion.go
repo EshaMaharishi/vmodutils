@@ -98,7 +98,7 @@ func NewSingleArmService(ctx context.Context, deps resource.Dependencies, name r
 		return nil, err
 	}
 
-	s.fs, err = FrameSystemWithOnePart(ctx, s.robotClient, conf.Arm)
+	s.fs, err = FrameSystemWithOnePart(ctx, s.robotClient, conf.Arm, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +112,17 @@ func (s *singleArmService) Name() resource.Name {
 
 func (s *singleArmService) Move(ctx context.Context, req motion.MoveReq) (bool, error) {
 
+	myFs := s.fs
+	var err error
+
+	if req.WorldState != nil && len(req.WorldState.Transforms()) > 0 {
+		// TODO: cache
+		myFs, err = FrameSystemWithOnePart(ctx, s.robotClient, s.cfg.Arm, req.WorldState.Transforms())
+		if err != nil {
+			return false, err
+		}
+	}
+
 	startJoints, err := s.myArm.JointPositions(ctx, nil)
 	if err != nil {
 		return false, err
@@ -119,7 +130,7 @@ func (s *singleArmService) Move(ctx context.Context, req motion.MoveReq) (bool, 
 
 	planReq := &motionplan.PlanRequest{
 		Logger:      s.logger,
-		FrameSystem: s.fs,
+		FrameSystem: myFs,
 		Goals: []*motionplan.PlanState{
 			motionplan.NewPlanState(referenceframe.FrameSystemPoses{s.cfg.Arm: req.Destination}, nil),
 		},

@@ -9,7 +9,7 @@ import (
 	"go.viam.com/rdk/robot/framesystem"
 )
 
-func FrameSystemWithOnePart(ctx context.Context, myRobot robot.Robot, name string) (referenceframe.FrameSystem, error) {
+func FrameSystemWithOnePart(ctx context.Context, myRobot robot.Robot, name string, transforms []*referenceframe.LinkInFrame) (referenceframe.FrameSystem, error) {
 	fsc, err := myRobot.FrameSystemConfig(ctx)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func FrameSystemWithOnePart(ctx context.Context, myRobot robot.Robot, name strin
 		name = p.FrameConfig.Parent()
 	}
 
-	return referenceframe.NewFrameSystem("temp", parts, nil)
+	return referenceframe.NewFrameSystem("temp", parts, transforms)
 }
 
 func FindPart(fsc *framesystem.Config, name string) *referenceframe.FrameSystemPart {
