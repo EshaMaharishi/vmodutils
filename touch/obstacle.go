@@ -61,12 +61,15 @@ func newObstacle(ctx context.Context, deps resource.Dependencies, config resourc
 	return &Obstacle{
 		name:      config.ResourceName(),
 		obstacles: gs,
+		mf:        referenceframe.NewSimpleModel(config.ResourceName().ShortName() + "-model"),
 	}, nil
 }
 
 type Obstacle struct {
 	resource.AlwaysRebuild
 	resource.TriviallyCloseable
+
+	mf referenceframe.Model
 
 	name      resource.Name
 	obstacles []spatialmath.Geometry
@@ -85,7 +88,7 @@ func (o *Obstacle) Geometries(ctx context.Context, _ map[string]interface{}) ([]
 }
 
 func (o *Obstacle) ModelFrame() referenceframe.Model {
-	return nil
+	return o.mf
 }
 
 func (o *Obstacle) Name() resource.Name {
