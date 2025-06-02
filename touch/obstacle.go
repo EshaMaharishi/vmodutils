@@ -58,11 +58,16 @@ func newObstacle(ctx context.Context, deps resource.Dependencies, config resourc
 		return nil, err
 	}
 
-	return &Obstacle{
+	o := &Obstacle{
 		name:      config.ResourceName(),
 		obstacles: gs,
-		mf:        referenceframe.NewSimpleModel(config.ResourceName().ShortName() + "-model"),
-	}, nil
+	}
+
+	o.mf, err = gripper.MakeModel(config.ResourceName().ShortName(), gs)
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
 }
 
 type Obstacle struct {
