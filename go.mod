@@ -5,7 +5,7 @@ go 1.23.8
 require (
 	github.com/golang/geo v0.0.0-20230421003525-6adc56603217
 	github.com/google/uuid v1.6.0
-	go.viam.com/rdk v0.77.1-0.20250602150525-9fb6eae67bea
+	go.viam.com/rdk v0.78.1-0.20250602162744-3cda0f54bc02
 	go.viam.com/test v1.2.4
 	go.viam.com/utils v0.1.143
 )
