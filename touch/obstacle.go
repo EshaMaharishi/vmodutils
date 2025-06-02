@@ -103,3 +103,15 @@ func (o *Obstacle) IsMoving(context.Context) (bool, error) {
 func (o *Obstacle) Stop(context.Context, map[string]interface{}) error {
 	return nil
 }
+
+func (g *Obstacle) CurrentInputs(ctx context.Context) ([]referenceframe.Input, error) {
+	return []referenceframe.Input{}, nil
+}
+
+func (g *Obstacle) GoToInputs(ctx context.Context, inputs ...[]referenceframe.Input) error {
+	return nil
+}
+
+func (g *Obstacle) Kinematics(ctx context.Context) (referenceframe.Model, error) {
+	return g.ModelFrame(), nil
+}
