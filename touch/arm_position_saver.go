@@ -2,6 +2,7 @@ package touch
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/golang/geo/r3"
@@ -101,7 +102,20 @@ func (aps *ArmPositionSaver) Name() resource.Name {
 }
 
 func (aps *ArmPositionSaver) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {
-	return nil, nil
+	if cmd["cfg"] == true {
+		jsonData, err := json.Marshal(aps.cfg)
+		if err != nil {
+			return nil, err
+		}
+
+		return map[string]interface{}{
+			"joints" : aps.cfg.Joints,
+			"point" : aps.cfg.Point,
+			"orientation" : aps.cfg.Orientation,
+			"as_json" : string(jsonData),
+		}, nil
+	}
+	return nil, fmt.Errorf("unknown command %v", cmd)
 }
 
 func (aps *ArmPositionSaver) SetPosition(ctx context.Context, position uint32, extra map[string]interface{}) error {
