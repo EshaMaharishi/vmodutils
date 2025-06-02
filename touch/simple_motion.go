@@ -3,6 +3,7 @@ package touch
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -55,6 +56,13 @@ func (cfg *SingleArmConfig) allFrames() []string {
 	return all
 }
 
+type fsCacheEntry struct {
+	fs referenceframe.FrameSystem
+
+	plansLock sync.Mutex
+	plans     map[int][][]referenceframe.Input
+}
+
 type singleArmService struct {
 	resource.AlwaysRebuild
 
@@ -68,6 +76,9 @@ type singleArmService struct {
 
 	myArm         arm.Arm
 	builtinMotion motion.Service
+
+	cachedFSLock sync.Mutex
+	cachedFS     map[int]*fsCacheEntry
 }
 
 func newSingleArmMotionService(ctx context.Context, deps resource.Dependencies, rawConf resource.Config, logger logging.Logger) (motion.Service, error) {
@@ -83,9 +94,10 @@ func newSingleArmMotionService(ctx context.Context, deps resource.Dependencies, 
 func NewSingleArmService(ctx context.Context, deps resource.Dependencies, name resource.Name, conf *SingleArmConfig, logger logging.Logger) (motion.Service, error) {
 
 	s := &singleArmService{
-		name:   name,
-		logger: logger,
-		cfg:    conf,
+		name:     name,
+		logger:   logger,
+		cfg:      conf,
+		cachedFS: map[int]*fsCacheEntry{},
 	}
 
 	var err error
@@ -105,10 +117,12 @@ func NewSingleArmService(ctx context.Context, deps resource.Dependencies, name r
 		return nil, err
 	}
 
-	s.fs, err = FrameSystemWithSomeParts(ctx, s.robotClient, conf.allFrames(), nil)
+	fs, err := FrameSystemWithSomeParts(ctx, s.robotClient, conf.allFrames(), nil)
 	if err != nil {
 		return nil, err
 	}
+
+	s.cachedFS[0] = &fsCacheEntry{fs: fs, plans: map[int][][]referenceframe.Input{}}
 
 	return s, nil
 }
@@ -117,23 +131,61 @@ func (s *singleArmService) Name() resource.Name {
 	return s.name
 }
 
-func (s *singleArmService) Move(ctx context.Context, req motion.MoveReq) (bool, error) {
-
-	myFs := s.fs
-	var err error
+func (s *singleArmService) getFS(ctx context.Context, req motion.MoveReq) (*fsCacheEntry, error) {
+	h := 0
 
 	if req.WorldState != nil && len(req.WorldState.Transforms()) > 0 {
-		// TODO: cache
-		myFs, err = FrameSystemWithSomeParts(ctx, s.robotClient, s.cfg.allFrames(), req.WorldState.Transforms())
-		if err != nil {
-			return false, err
-		}
+		h = HashTransforms(req.WorldState.Transforms())
 	}
 
-	startJoints, err := s.myArm.JointPositions(ctx, nil)
-	if err != nil {
-		return false, err
+	s.cachedFSLock.Lock()
+	temp, ok := s.cachedFS[h]
+	s.cachedFSLock.Unlock()
+
+	if ok {
+		s.logger.Infof("using cached fs %v %v", h, req.WorldState.Transforms())
+		return temp, nil
 	}
+
+	fs, err := FrameSystemWithSomeParts(ctx, s.robotClient, s.cfg.allFrames(), req.WorldState.Transforms())
+	if err != nil {
+		return nil, err
+	}
+
+	temp = &fsCacheEntry{fs: fs, plans: map[int][][]referenceframe.Input{}}
+
+	s.cachedFSLock.Lock()
+	s.cachedFS[h] = temp
+	s.cachedFSLock.Unlock()
+
+	return temp, nil
+}
+
+func (s *singleArmService) getPlan(ctx context.Context, req motion.MoveReq, fs *fsCacheEntry, startJoints []referenceframe.Input) ([][]referenceframe.Input, error) {
+
+	planHash := HashMoveReq(req) + (3 * HashInputs(startJoints))
+
+	fs.plansLock.Lock()
+	myPlan, ok := fs.plans[planHash]
+	fs.plansLock.Unlock()
+
+	if ok {
+		return myPlan, nil
+	}
+
+	myPlan, err := s.createPlan(ctx, req, fs.fs, startJoints)
+	if err != nil {
+		return nil, err
+	}
+
+	fs.plansLock.Lock()
+	fs.plans[planHash] = myPlan
+	fs.plansLock.Unlock()
+
+	return myPlan, nil
+}
+
+func (s *singleArmService) createPlan(ctx context.Context, req motion.MoveReq, myFs referenceframe.FrameSystem, startJoints []referenceframe.Input) ([][]referenceframe.Input, error) {
 
 	planReq := &motionplan.PlanRequest{
 		Logger:      s.logger,
@@ -143,13 +195,12 @@ func (s *singleArmService) Move(ctx context.Context, req motion.MoveReq) (bool, 
 		},
 		StartState: motionplan.NewPlanState(nil, referenceframe.FrameSystemInputs{s.cfg.Arm: startJoints}),
 		WorldState: req.WorldState,
-		Options:    req.Extra,
 	}
 
 	startTime := time.Now()
 	plan, err := motionplan.PlanMotion(ctx, planReq)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	s.logger.Infof("plan: trajectory length: %d path length: %d, planned in %v", len(plan.Trajectory()), len(plan.Path()), time.Since(startTime))
@@ -161,13 +212,32 @@ func (s *singleArmService) Move(ctx context.Context, req motion.MoveReq) (bool, 
 		myPlan = append(myPlan, t[s.cfg.Arm])
 		distance := referenceframe.InputsL2Distance(prev, t[s.cfg.Arm])
 		if distance > s.cfg.maxJointDistance() {
-			s.logger.Infof("\t distance: %v > maxJointDistance (%v)", distance, s.cfg.maxJointDistance())
-			if s.cfg.Fallback {
-				s.logger.Info("falling back")
-				return s.builtinMotion.Move(ctx, req)
-			}
-			return false, fmt.Errorf("distance: %v > maxJointDistance (%v)", distance, s.cfg.maxJointDistance())
+			return nil, fmt.Errorf("distance: %v > maxJointDistance (%v)", distance, s.cfg.maxJointDistance())
 		}
+	}
+
+	return myPlan, nil
+}
+
+func (s *singleArmService) Move(ctx context.Context, req motion.MoveReq) (bool, error) {
+
+	myFs, err := s.getFS(ctx, req)
+	if err != nil {
+		return false, err
+	}
+
+	startJoints, err := s.myArm.JointPositions(ctx, nil)
+	if err != nil {
+		return false, err
+	}
+
+	myPlan, err := s.getPlan(ctx, req, myFs, startJoints)
+	if err != nil {
+		if s.cfg.Fallback {
+			s.logger.Info("falling back because of %v", err)
+			return s.builtinMotion.Move(ctx, req)
+		}
+		return false, err
 	}
 
 	err = s.myArm.MoveThroughJointPositions(ctx, myPlan, nil, nil)
