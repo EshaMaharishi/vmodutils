@@ -143,9 +143,11 @@ func (s *singleArmService) getFS(ctx context.Context, req motion.MoveReq) (*fsCa
 	s.cachedFSLock.Unlock()
 
 	if ok {
-		s.logger.Infof("using cached fs %v %v", h, req.WorldState.Transforms())
+		s.logger.Debugf("using cached fs %v %v", h, req.WorldState.Transforms())
 		return temp, nil
 	}
+
+	s.logger.Infof("creating new cached fs %v %v", h, req.WorldState.Transforms())
 
 	fs, err := FrameSystemWithSomeParts(ctx, s.robotClient, s.cfg.allFrames(), req.WorldState.Transforms())
 	if err != nil {
@@ -170,8 +172,11 @@ func (s *singleArmService) getPlan(ctx context.Context, req motion.MoveReq, fs *
 	fs.plansLock.Unlock()
 
 	if ok {
+		s.logger.Infof("using cached plan %v", planHash)
 		return myPlan, nil
 	}
+
+	s.logger.Infof("creating new cache entry for \n\t hash: %v \n\t start: %v \n\t dest: %v", planHash, startJoints, req.Destination)
 
 	myPlan, err := s.createPlan(ctx, req, fs.fs, startJoints)
 	if err != nil {
