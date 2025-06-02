@@ -109,10 +109,10 @@ func (aps *ArmPositionSaver) DoCommand(ctx context.Context, cmd map[string]inter
 		}
 
 		return map[string]interface{}{
-			"joints" : aps.cfg.Joints,
-			"point" : aps.cfg.Point,
-			"orientation" : aps.cfg.Orientation,
-			"as_json" : string(jsonData),
+			"joints":      aps.cfg.Joints,
+			"point":       aps.cfg.Point,
+			"orientation": aps.cfg.Orientation,
+			"as_json":     string(jsonData),
 		}, nil
 	}
 	return nil, fmt.Errorf("unknown command %v", cmd)

@@ -79,6 +79,9 @@ type singleArmService struct {
 
 	cachedFSLock sync.Mutex
 	cachedFS     map[int]*fsCacheEntry
+
+	planHashLock sync.Mutex
+	planHash     map[string][][]float64
 }
 
 func newSingleArmMotionService(ctx context.Context, deps resource.Dependencies, rawConf resource.Config, logger logging.Logger) (motion.Service, error) {
@@ -98,6 +101,7 @@ func NewSingleArmService(ctx context.Context, deps resource.Dependencies, name r
 		logger:   logger,
 		cfg:      conf,
 		cachedFS: map[int]*fsCacheEntry{},
+		planHash: map[string][][]float64{},
 	}
 
 	var err error
@@ -245,6 +249,25 @@ func (s *singleArmService) Move(ctx context.Context, req motion.MoveReq) (bool, 
 		return false, err
 	}
 
+	if req.Extra != nil && req.Extra["hash"] == true {
+		hashKey, ok := req.Extra["hash_key"].(string)
+		if !ok {
+			return false, fmt.Errorf("hash_key not a string")
+		}
+
+		newPlan := [][]float64{}
+
+		for _, i := range myPlan {
+			newPlan = append(newPlan, referenceframe.InputsToFloats(i))
+		}
+
+		s.planHashLock.Lock()
+		s.planHash[hashKey] = newPlan
+		s.planHashLock.Unlock()
+
+		return false, nil
+	}
+
 	err = s.myArm.MoveThroughJointPositions(ctx, myPlan, nil, nil)
 	if err != nil {
 		return false, err
@@ -280,7 +303,24 @@ func (s *singleArmService) PlanHistory(ctx context.Context, req motion.PlanHisto
 }
 
 func (s *singleArmService) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {
-	return nil, nil
+	if cmd["get_hash"] == true {
+		hashKey, ok := cmd["hash_key"].(string)
+		if !ok {
+			return nil, fmt.Errorf("hash_key not a string")
+		}
+
+		s.planHashLock.Lock()
+		plan, ok := s.planHash[hashKey]
+		s.planHashLock.Unlock()
+
+		if !ok {
+			return nil, fmt.Errorf("no hash entry with %v", plan)
+		}
+
+		return map[string]interface{}{"plan": plan}, nil
+
+	}
+	return nil, fmt.Errorf("unknown command %v", cmd)
 }
 
 func (s *singleArmService) Close(ctx context.Context) error {
