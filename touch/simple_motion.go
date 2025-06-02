@@ -38,7 +38,7 @@ func (cfg *SingleArmConfig) Validate(path string) ([]string, []string, error) {
 	if cfg.Arm == "" {
 		return nil, nil, fmt.Errorf("need an arm")
 	}
-	return []string{cfg.Arm, "builtin"}, nil, nil
+	return []string{cfg.Arm, motion.Named("builtin").String()}, nil, nil
 }
 
 func (cfg *SingleArmConfig) maxJointDistance() float64 {
