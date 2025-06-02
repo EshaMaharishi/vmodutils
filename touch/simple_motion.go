@@ -30,6 +30,7 @@ func init() {
 
 type SingleArmConfig struct {
 	Arm              string
+	OtherFrames      []string `json:"other_frames"`
 	Fallback         bool
 	MaxJointDistance float64 `json:"max_joint_distance"`
 }
@@ -46,6 +47,12 @@ func (cfg *SingleArmConfig) maxJointDistance() float64 {
 		return 1.5
 	}
 	return cfg.MaxJointDistance
+}
+
+func (cfg *SingleArmConfig) allFrames() []string {
+	all := []string{cfg.Arm}
+	all = append(all, cfg.OtherFrames...)
+	return all
 }
 
 type singleArmService struct {
@@ -98,7 +105,7 @@ func NewSingleArmService(ctx context.Context, deps resource.Dependencies, name r
 		return nil, err
 	}
 
-	s.fs, err = FrameSystemWithOnePart(ctx, s.robotClient, conf.Arm, nil)
+	s.fs, err = FrameSystemWithSomeParts(ctx, s.robotClient, conf.allFrames(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +124,7 @@ func (s *singleArmService) Move(ctx context.Context, req motion.MoveReq) (bool, 
 
 	if req.WorldState != nil && len(req.WorldState.Transforms()) > 0 {
 		// TODO: cache
-		myFs, err = FrameSystemWithOnePart(ctx, s.robotClient, s.cfg.Arm, req.WorldState.Transforms())
+		myFs, err = FrameSystemWithSomeParts(ctx, s.robotClient, s.cfg.allFrames(), req.WorldState.Transforms())
 		if err != nil {
 			return false, err
 		}
