@@ -1,10 +1,12 @@
 package touch
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/golang/geo/r3"
 
+	"go.viam.com/rdk/motionplan"
 	"go.viam.com/rdk/referenceframe"
 	"go.viam.com/rdk/spatialmath"
 	"go.viam.com/test"
@@ -37,4 +39,40 @@ func TestHashPose(t *testing.T) {
 	ob := &spatialmath.OrientationVectorDegrees{OX: 0.739191, OY: -0.551458, OZ: 0.364362, Theta: 101.893958}
 
 	test.That(t, HashPose(spatialmath.NewPose(pp, oa)), test.ShouldNotEqual, HashPose(spatialmath.NewPose(pp, ob)))
+}
+
+func TestHashConstraint(t *testing.T) {
+	diff := []*motionplan.Constraints{
+		nil,
+		{},
+		{
+			LinearConstraint: []motionplan.LinearConstraint{
+				{LineToleranceMm: 5, OrientationToleranceDegs: 5},
+			},
+		},
+		{
+			LinearConstraint: []motionplan.LinearConstraint{
+				{LineToleranceMm: 6, OrientationToleranceDegs: 5},
+			},
+		},
+		{
+			LinearConstraint: []motionplan.LinearConstraint{
+				{LineToleranceMm: 5, OrientationToleranceDegs: 6},
+			},
+		},
+	}
+
+	for x := 0; x < len(diff); x++ {
+		xx := HashConstraints(diff[x])
+		for y := x + 1; y < len(diff); y++ {
+			t.Run(
+				fmt.Sprintf("%d-%d", x, y),
+				func(t *testing.T) {
+					yy := HashConstraints(diff[y])
+					test.That(t, xx, test.ShouldNotEqual, yy)
+				},
+			)
+		}
+	}
+
 }

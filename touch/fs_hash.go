@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"go.viam.com/rdk/motionplan"
 	"go.viam.com/rdk/referenceframe"
 	"go.viam.com/rdk/services/motion"
 	"go.viam.com/rdk/spatialmath"
@@ -71,6 +72,51 @@ func HashPose(p spatialmath.Pose) int {
 func HashMoveReq(req motion.MoveReq) int {
 	hash := HashString(req.ComponentName.ShortName())
 	hash += HashPoseInFrame(req.Destination)
+	hash += HashConstraints(req.Constraints)
+	return hash
+}
+
+func HashConstraints(c *motionplan.Constraints) int {
+	if c == nil {
+		return 0
+	}
+
+	hash := 1
+
+	for _, cc := range c.LinearConstraint {
+		hash += HashLinearConstraint(cc)
+	}
+	for _, cc := range c.PseudolinearConstraint {
+		hash += HashPseudolinearConstraint(cc)
+	}
+	for _, cc := range c.OrientationConstraint {
+		hash += HashOrientationConstraint(cc)
+	}
+	for _, cc := range c.CollisionSpecification {
+		hash += HashCollisionSpecification(cc)
+	}
+
+	return hash
+}
+func HashLinearConstraint(c motionplan.LinearConstraint) int {
+	return int(c.LineToleranceMm*12321) + int(c.OrientationToleranceDegs*831)
+}
+
+func HashPseudolinearConstraint(c motionplan.PseudolinearConstraint) int {
+	return int(c.LineToleranceFactor*72321) + int(c.OrientationToleranceFactor*83231)
+}
+
+func HashOrientationConstraint(c motionplan.OrientationConstraint) int {
+	return int(c.OrientationToleranceDegs * 84132)
+
+}
+func HashCollisionSpecification(c motionplan.CollisionSpecification) int {
+	hash := 0
+
+	for _, a := range c.Allows {
+		hash += HashString(a.Frame1)*12 + HashString(a.Frame2)*931
+	}
+
 	return hash
 }
 
