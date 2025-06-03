@@ -3,11 +3,13 @@ package touch
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.viam.com/rdk/components/camera"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/rimage"
 
 	"github.com/erh/vmodutils"
 )
@@ -73,11 +75,28 @@ func (mapc *MergeCamera) Name() resource.Name {
 }
 
 func (mapc *MergeCamera) Image(ctx context.Context, mimeType string, extra map[string]interface{}) ([]byte, camera.ImageMetadata, error) {
-	return nil, camera.ImageMetadata{}, fmt.Errorf("image not supported")
+	pc, err := mapc.NextPointCloud(ctx)
+	if err != nil {
+		return nil, camera.ImageMetadata{}, err
+	}
+	img := PCToImage(pc)
+
+	data, err := rimage.EncodeImage(ctx, img, mimeType)
+	if err != nil {
+		return nil, camera.ImageMetadata{}, err
+	}
+
+	return data, camera.ImageMetadata{mimeType}, err
 }
 
 func (mapc *MergeCamera) Images(ctx context.Context) ([]camera.NamedImage, resource.ResponseMetadata, error) {
-	return nil, resource.ResponseMetadata{}, fmt.Errorf("image not supported")
+	pc, err := mapc.NextPointCloud(ctx)
+	if err != nil {
+		return nil, resource.ResponseMetadata{}, err
+	}
+	img := PCToImage(pc)
+
+	return []camera.NamedImage{{img, "cropped"}}, resource.ResponseMetadata{time.Now()}, nil
 }
 
 func (mapc *MergeCamera) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {
