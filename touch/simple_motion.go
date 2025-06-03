@@ -202,8 +202,9 @@ func (s *singleArmService) createPlan(ctx context.Context, req motion.MoveReq, m
 		Goals: []*motionplan.PlanState{
 			motionplan.NewPlanState(referenceframe.FrameSystemPoses{req.ComponentName.ShortName(): req.Destination}, nil),
 		},
-		StartState: motionplan.NewPlanState(nil, referenceframe.FrameSystemInputs{s.cfg.Arm: startJoints}),
-		WorldState: req.WorldState,
+		StartState:  motionplan.NewPlanState(nil, referenceframe.FrameSystemInputs{s.cfg.Arm: startJoints}),
+		Constraints: req.Constraints,
+		WorldState:  req.WorldState,
 	}
 
 	startTime := time.Now()
