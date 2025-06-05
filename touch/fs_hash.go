@@ -1,6 +1,7 @@
 package touch
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
@@ -35,7 +36,7 @@ func HashTransforms(transforms []*referenceframe.LinkInFrame) int {
 func HashLinkInFrame(lif *referenceframe.LinkInFrame) int {
 	hash := HashPoseInFrame(lif.PoseInFrame)
 
-	// TODO - geometry
+	hash += HashString(fmt.Sprintf("%v", lif.Geometry())) // TODO hack
 
 	return hash
 }
@@ -73,6 +74,7 @@ func HashMoveReq(req motion.MoveReq) int {
 	hash := HashString(req.ComponentName.ShortName())
 	hash += HashPoseInFrame(req.Destination)
 	hash += HashConstraints(req.Constraints)
+	hash += HashWorldState(req.WorldState)
 	return hash
 }
 
@@ -125,5 +127,23 @@ func HashInputs(in []referenceframe.Input) int {
 	for i, v := range in {
 		hash += ((i + 7) * int(v.Value*10)) * (i + 11)
 	}
+	return hash
+}
+
+func HashWorldState(ws *referenceframe.WorldState) int {
+	if ws == nil {
+		return 0
+	}
+
+	hash := 0
+
+	for _, o := range ws.Obstacles() {
+		hash += HashString(fmt.Sprintf("%v", o)) // TODO HACK
+	}
+
+	for _, t := range ws.Transforms() {
+		hash += HashLinkInFrame(t)
+	}
+
 	return hash
 }
