@@ -12,6 +12,7 @@ import (
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/rimage"
+	"go.viam.com/rdk/spatialmath"
 	"go.viam.com/test"
 )
 
@@ -127,5 +128,36 @@ func TestPCStats(t *testing.T) {
 	md := in.MetaData()
 	test.That(t, md.MaxSideLength(), test.ShouldBeGreaterThan, 100)
 	test.That(t, md.MaxSideLength(), test.ShouldBeLessThan, 110)
+
+}
+
+func TestGetApproachPoint(t *testing.T) {
+	md := pointcloud.MetaData{
+		MinX: 200,
+		MaxX: 267.7,
+		MinY: 164,
+		MaxY: 239.4,
+	}
+	c := r3.Vector{233.8, 202.05, 85.0}
+
+	p := GetApproachPoint(md, c, 100, &spatialmath.OrientationVectorDegrees{OX: 1})
+	test.That(t, p.X, test.ShouldAlmostEqual, c.X-100, 1)
+	test.That(t, p.Y, test.ShouldAlmostEqual, c.Y, 1)
+	test.That(t, p.Z, test.ShouldAlmostEqual, c.Z, 1)
+
+	p = GetApproachPoint(md, c, 100, &spatialmath.OrientationVectorDegrees{OX: -1})
+	test.That(t, p.X, test.ShouldAlmostEqual, c.X+100, 1)
+	test.That(t, p.Y, test.ShouldAlmostEqual, c.Y, 1)
+	test.That(t, p.Z, test.ShouldAlmostEqual, c.Z, 1)
+
+	p = GetApproachPoint(md, c, 100, &spatialmath.OrientationVectorDegrees{OY: 1})
+	test.That(t, p.X, test.ShouldAlmostEqual, c.X, 1)
+	test.That(t, p.Y, test.ShouldAlmostEqual, c.Y-100, 1)
+	test.That(t, p.Z, test.ShouldAlmostEqual, c.Z, 1)
+
+	p = GetApproachPoint(md, c, 100, &spatialmath.OrientationVectorDegrees{OY: -1})
+	test.That(t, p.X, test.ShouldAlmostEqual, c.X, 1)
+	test.That(t, p.Y, test.ShouldAlmostEqual, c.Y+100, 1)
+	test.That(t, p.Z, test.ShouldAlmostEqual, c.Z, 1)
 
 }

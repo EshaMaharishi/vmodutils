@@ -8,6 +8,7 @@ import (
 	"github.com/golang/geo/r3"
 
 	"go.viam.com/rdk/pointcloud"
+	"go.viam.com/rdk/spatialmath"
 )
 
 func PCDFindHighestInRegion(pc pointcloud.PointCloud, box image.Rectangle) r3.Vector {
@@ -142,4 +143,20 @@ func PCToImage(pc pointcloud.PointCloud) image.Image {
 	})
 
 	return img
+}
+
+func GetApproachPoint(md pointcloud.MetaData, c r3.Vector, deltaLinear float64, o *spatialmath.OrientationVectorDegrees) r3.Vector {
+
+	d := math.Pow((o.OX*o.OX)+(o.OY*o.OY), .5)
+
+	xLinear := (o.OX * deltaLinear / d)
+	yLinear := (o.OY * deltaLinear / d)
+
+	approachPoint := r3.Vector{
+		X: c.X - xLinear,
+		Y: c.Y - yLinear,
+		Z: c.Z,
+	}
+
+	return approachPoint
 }
