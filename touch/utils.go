@@ -145,17 +145,18 @@ func PCToImage(pc pointcloud.PointCloud) image.Image {
 	return img
 }
 
-func GetApproachPoint(md pointcloud.MetaData, c r3.Vector, deltaLinear float64, o *spatialmath.OrientationVectorDegrees) r3.Vector {
-
-	d := math.Pow((o.OX*o.OX)+(o.OY*o.OY), .5)
+// GetApproachPoint
+func GetApproachPoint(p r3.Vector, deltaLinear float64, o *spatialmath.OrientationVectorDegrees) r3.Vector {
+	d := math.Pow((o.OX*o.OX)+(o.OY*o.OY)+(o.OZ*o.OZ), .5)
 
 	xLinear := (o.OX * deltaLinear / d)
 	yLinear := (o.OY * deltaLinear / d)
+	zLinear := (o.OZ * deltaLinear / d)
 
 	approachPoint := r3.Vector{
-		X: c.X - xLinear,
-		Y: c.Y - yLinear,
-		Z: c.Z,
+		X: p.X - xLinear,
+		Y: p.Y - yLinear,
+		Z: p.Z - zLinear,
 	}
 
 	return approachPoint
