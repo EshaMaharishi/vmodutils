@@ -125,7 +125,7 @@ func (cc *cropCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud
 		return nil, err
 	}
 
-	pc = PCDCrop(pc, cc.cfg.Min, cc.cfg.Max)
+	pc = PCCrop(pc, cc.cfg.Min, cc.cfg.Max)
 	return pc, nil
 }
 

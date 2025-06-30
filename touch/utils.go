@@ -11,12 +11,31 @@ import (
 	"go.viam.com/rdk/spatialmath"
 )
 
-func PCDFindHighestInRegion(pc pointcloud.PointCloud, box image.Rectangle) r3.Vector {
+func PCFindHighestInRegion(pc pointcloud.PointCloud, box image.Rectangle) r3.Vector {
 
 	best := r3.Vector{Z: -100000}
 
 	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
 		if p.Z > best.Z {
+			if p.X >= float64(box.Min.X) && p.Y >= float64(box.Min.Y) {
+				if p.X <= float64(box.Max.X) && p.Y <= float64(box.Max.Y) {
+					best = p
+				}
+			}
+		}
+
+		return true
+	})
+
+	return best
+}
+
+func PCFindLowestInRegion(pc pointcloud.PointCloud, box image.Rectangle) r3.Vector {
+
+	best := r3.Vector{Z: 100000}
+
+	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
+		if p.Z < best.Z {
 			if p.X >= float64(box.Min.X) && p.Y >= float64(box.Min.Y) {
 				if p.X <= float64(box.Max.X) && p.Y <= float64(box.Max.Y) {
 					best = p
@@ -72,7 +91,7 @@ func InBox(pt, min, max r3.Vector) bool {
 	return true
 }
 
-func PCDCrop(pc pointcloud.PointCloud, min, max r3.Vector) pointcloud.PointCloud {
+func PCCrop(pc pointcloud.PointCloud, min, max r3.Vector) pointcloud.PointCloud {
 	fixed := pointcloud.NewBasicEmpty()
 
 	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {

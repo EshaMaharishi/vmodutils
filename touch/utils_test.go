@@ -78,11 +78,11 @@ func TestPCD1(t *testing.T) {
 	err = png.Encode(file, img)
 	test.That(t, err, test.ShouldBeNil)
 
-	h := PCDFindHighestInRegion(out, *b2)
+	h := PCFindHighestInRegion(out, *b2)
 	logger.Infof("hi %v", h)
 }
 
-func TestPCDCrop(t *testing.T) {
+func TestPCCrop(t *testing.T) {
 	a := pointcloud.NewBasicEmpty()
 	a.Set(r3.Vector{1, 1, 1}, pointcloud.NewBasicData())
 	a.Set(r3.Vector{5, 5, 5}, pointcloud.NewBasicData())
@@ -97,7 +97,7 @@ func TestPCDCrop(t *testing.T) {
 	_, got = a.At(5, 0, 5)
 	test.That(t, got, test.ShouldBeTrue)
 
-	b := PCDCrop(a, r3.Vector{2, 2, 2}, r3.Vector{7, 7, 7})
+	b := PCCrop(a, r3.Vector{2, 2, 2}, r3.Vector{7, 7, 7})
 	test.That(t, b.Size(), test.ShouldEqual, 1)
 	_, got = b.At(1, 1, 1)
 	test.That(t, got, test.ShouldBeFalse)
