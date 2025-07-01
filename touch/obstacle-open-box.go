@@ -8,6 +8,7 @@ import (
 
 	"go.viam.com/rdk/components/gripper"
 	"go.viam.com/rdk/logging"
+	"go.viam.com/rdk/motionplan"
 	"go.viam.com/rdk/referenceframe"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/services/motion"
@@ -165,7 +166,9 @@ func (o *ObstacleOpenBox) Grab(ctx context.Context, extra map[string]interface{}
 	}
 
 	p = referenceframe.NewPoseInFrame("world",
-		spatialmath.Compose(p.Pose(), spatialmath.NewPoseFromPoint(r3.Vector{0, 0, o.conf.offset()})))
+		spatialmath.Compose(
+			spatialmath.NewPose(p.Pose().Point(), &spatialmath.OrientationVectorDegrees{OZ: -1}),
+			spatialmath.NewPoseFromPoint(r3.Vector{0, 0, o.conf.offset()})))
 
 	o.logger.Infof("want to move %s to %v", o.toMove.Name().ShortName(), p)
 
@@ -173,6 +176,9 @@ func (o *ObstacleOpenBox) Grab(ctx context.Context, extra map[string]interface{}
 		motion.MoveReq{
 			ComponentName: o.toMove.Name(),
 			Destination:   p,
+			Constraints: &motionplan.Constraints{
+				OrientationConstraint: []motionplan.OrientationConstraint{{180}},
+			},
 		})
 	if err != nil {
 		return false, fmt.Errorf("cannot move to %v because: %w", p, err)
