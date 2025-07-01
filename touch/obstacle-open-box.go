@@ -165,10 +165,24 @@ func (o *ObstacleOpenBox) Grab(ctx context.Context, extra map[string]interface{}
 		return false, err
 	}
 
+	p2, err := o.motion.GetPose(ctx, o.toMove.Name(), "world", nil, nil)
+	if err != nil {
+		return false, err
+	}
+
 	p = referenceframe.NewPoseInFrame("world",
-		spatialmath.Compose(
-			spatialmath.NewPose(p.Pose().Point(), &spatialmath.OrientationVectorDegrees{OZ: -1}),
-			spatialmath.NewPoseFromPoint(r3.Vector{0, 0, o.conf.offset()})))
+		spatialmath.NewPose(
+			r3.Vector{
+				X: p.Pose().Point().X,
+				Y: p.Pose().Point().Y,
+				Z: p.Pose().Point().Z + o.conf.offset(),
+			},
+			&spatialmath.OrientationVectorDegrees{
+				OZ:    -1,
+				Theta: p2.Pose().Orientation().OrientationVectorDegrees().Theta,
+			},
+		),
+	)
 
 	o.logger.Infof("want to move %s to %v", o.toMove.Name().ShortName(), p)
 
