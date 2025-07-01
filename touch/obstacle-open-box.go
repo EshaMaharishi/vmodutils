@@ -28,6 +28,7 @@ func init() {
 
 type ObstacleOpenBoxConfig struct {
 	Length, Width, Height float64
+	Thickness             float64
 }
 
 func (c *ObstacleOpenBoxConfig) Validate(path string) ([]string, []string, error) {
@@ -37,28 +38,35 @@ func (c *ObstacleOpenBoxConfig) Validate(path string) ([]string, []string, error
 	return nil, nil, nil
 }
 
+func (c *ObstacleOpenBoxConfig) thickness() float64 {
+	if c.Thickness <= 0 {
+		return 1
+	}
+	return c.Thickness
+}
+
 func (c *ObstacleOpenBoxConfig) Geometries(name string) ([]spatialmath.Geometry, error) {
 	bottom := c.Height / -2
 
-	floor, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, 0, bottom}), r3.Vector{c.Length, c.Width, 1}, name+"-floor")
+	floor, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, 0, bottom}), r3.Vector{c.Length, c.Width, c.thickness()}, name+"-floor")
 	if err != nil {
 		return nil, err
 	}
 
-	front, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{c.Length / 2, 0, 0}), r3.Vector{1, c.Width, c.Height}, name+"-front")
+	front, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{c.Length / 2, 0, 0}), r3.Vector{c.thickness(), c.Width, c.Height}, name+"-front")
 	if err != nil {
 		return nil, err
 	}
-	back, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{c.Length / -2, 0, 0}), r3.Vector{1, c.Width, c.Height}, name+"-back")
+	back, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{c.Length / -2, 0, 0}), r3.Vector{c.thickness(), c.Width, c.Height}, name+"-back")
 	if err != nil {
 		return nil, err
 	}
 
-	left, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, c.Width / 2, 0}), r3.Vector{c.Length, 1, c.Height}, name+"-left")
+	left, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, c.Width / 2, 0}), r3.Vector{c.Length, c.thickness(), c.Height}, name+"-left")
 	if err != nil {
 		return nil, err
 	}
-	right, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, c.Width / -2, 0}), r3.Vector{c.Length, 1, c.Height}, name+"-right")
+	right, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, c.Width / -2, 0}), r3.Vector{c.Length, c.thickness(), c.Height}, name+"-right")
 	if err != nil {
 		return nil, err
 	}
