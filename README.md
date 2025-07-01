@@ -60,7 +60,9 @@ Configure this with a frame and you can have obstacles on your robot without hav
   "length" : 10,
   "width" : 10,
   "height" : 10,
-  "thickness" : <optional, defaults to 1>
+  "thickness" : <optional, defaults to 1>,
+  "to_move" : <if you want to move something to grab>,
+  "motion" : <needed it to_move, but will also default to builtin>
 }
 ```
 
