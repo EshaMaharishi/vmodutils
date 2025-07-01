@@ -114,6 +114,7 @@ func newObstacleOpenBox(ctx context.Context, deps resource.Dependencies, config 
 
 	o := &ObstacleOpenBox{
 		name:      config.ResourceName(),
+		logger:    logger,
 		obstacles: gs,
 		conf:      newConf,
 	}
@@ -145,6 +146,7 @@ type ObstacleOpenBox struct {
 	mf referenceframe.Model
 
 	name      resource.Name
+	logger    logging.Logger
 	conf      *ObstacleOpenBoxConfig
 	obstacles []spatialmath.Geometry
 
@@ -165,11 +167,18 @@ func (o *ObstacleOpenBox) Grab(ctx context.Context, extra map[string]interface{}
 	p = referenceframe.NewPoseInFrame("world",
 		spatialmath.Compose(p.Pose(), spatialmath.NewPoseFromPoint(r3.Vector{0, 0, o.conf.offset()})))
 
-	return o.motion.Move(ctx,
+	o.logger.Infof("want to move %s to %v", o.toMove.Name().ShortName(), p)
+
+	_, err = o.motion.Move(ctx,
 		motion.MoveReq{
 			ComponentName: o.toMove.Name(),
 			Destination:   p,
 		})
+	if err != nil {
+		return false, fmt.Errorf("cannot move to %v because: %w", p, err)
+	}
+
+	return false, nil
 }
 
 func (o *ObstacleOpenBox) Open(ctx context.Context, extra map[string]interface{}) error {
