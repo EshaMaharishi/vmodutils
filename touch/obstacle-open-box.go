@@ -45,20 +45,20 @@ func (c *ObstacleOpenBoxConfig) Geometries(name string) ([]spatialmath.Geometry,
 		return nil, err
 	}
 
-	front, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{c.Length / 2, 0, 0}), r3.Vector{0, c.Width, c.Height}, name+"-front")
+	front, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{c.Length / 2, 0, 0}), r3.Vector{1, c.Width, c.Height}, name+"-front")
 	if err != nil {
 		return nil, err
 	}
-	back, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{c.Length / -2, 0, 0}), r3.Vector{0, c.Width, c.Height}, name+"-back")
+	back, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{c.Length / -2, 0, 0}), r3.Vector{1, c.Width, c.Height}, name+"-back")
 	if err != nil {
 		return nil, err
 	}
 
-	left, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, c.Width / 2, 0}), r3.Vector{c.Length, 0, c.Height}, name+"-left")
+	left, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, c.Width / 2, 0}), r3.Vector{c.Length, 1, c.Height}, name+"-left")
 	if err != nil {
 		return nil, err
 	}
-	right, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, c.Width / -2, 0}), r3.Vector{c.Length, 0, c.Height}, name+"-right")
+	right, err := spatialmath.NewBox(spatialmath.NewPoseFromPoint(r3.Vector{0, c.Width / -2, 0}), r3.Vector{c.Length, 1, c.Height}, name+"-right")
 	if err != nil {
 		return nil, err
 	}
