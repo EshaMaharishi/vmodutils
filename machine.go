@@ -135,3 +135,12 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 	_, err = c.UpdateRobotPart(ctx, id, part.Name, part.RobotConfig)
 	return err
 }
+
+func FindDep(deps resource.Dependencies, n string) (resource.Resource, bool) {
+	for nn, r := range deps {
+		if nn.ShortName() == n {
+			return r, true
+		}
+	}
+	return nil, false
+}
