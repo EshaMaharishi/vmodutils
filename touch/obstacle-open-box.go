@@ -10,6 +10,7 @@ import (
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/referenceframe"
 	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/services/motion"
 	"go.viam.com/rdk/spatialmath"
 
 	"github.com/erh/vmodutils"
@@ -29,13 +30,39 @@ func init() {
 type ObstacleOpenBoxConfig struct {
 	Length, Width, Height float64
 	Thickness             float64
+
+	ToMove string `json:"to_move"`
+	Motion string
+	Offset float64
+}
+
+func (c *ObstacleOpenBoxConfig) motion() string {
+	if c.Motion == "" {
+		return "builtin"
+	}
+	return c.Motion
 }
 
 func (c *ObstacleOpenBoxConfig) Validate(path string) ([]string, []string, error) {
 	if c.Length == 0 || c.Width == 0 || c.Height == 0 {
 		return nil, nil, fmt.Errorf("need length, width, and height")
 	}
-	return nil, nil, nil
+
+	deps := []string{}
+
+	if c.ToMove != "" {
+		deps = append(deps, c.ToMove)
+		deps = append(deps, motion.Named(c.motion()).String())
+	}
+
+	return deps, nil, nil
+}
+
+func (c *ObstacleOpenBoxConfig) offset() float64 {
+	if c.Offset == 0 {
+		return 50
+	}
+	return c.Offset
 }
 
 func (c *ObstacleOpenBoxConfig) thickness() float64 {
@@ -85,15 +112,29 @@ func newObstacleOpenBox(ctx context.Context, deps resource.Dependencies, config 
 		return nil, err
 	}
 
-	o := &Obstacle{
+	o := &ObstacleOpenBox{
 		name:      config.ResourceName(),
 		obstacles: gs,
+		conf:      newConf,
 	}
 
 	o.mf, err = gripper.MakeModel(config.ResourceName().ShortName(), gs)
 	if err != nil {
 		return nil, err
 	}
+
+	if newConf.ToMove != "" {
+		var ok bool
+		o.toMove, ok = vmodutils.FindDep(deps, newConf.ToMove)
+		if !ok {
+			return nil, fmt.Errorf("cannot find ToMove [%s]", newConf.ToMove)
+		}
+		o.motion, err = motion.FromDependencies(deps, newConf.motion())
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return o, nil
 }
 
@@ -104,11 +145,31 @@ type ObstacleOpenBox struct {
 	mf referenceframe.Model
 
 	name      resource.Name
+	conf      *ObstacleOpenBoxConfig
 	obstacles []spatialmath.Geometry
+
+	toMove resource.Resource
+	motion motion.Service
 }
 
 func (o *ObstacleOpenBox) Grab(ctx context.Context, extra map[string]interface{}) (bool, error) {
-	return false, fmt.Errorf("obstacle can't grab")
+	if o.toMove == nil {
+		return false, fmt.Errorf("obstacle opem box has no to_move specified")
+	}
+
+	p, err := o.motion.GetPose(ctx, o.name, "world", nil, nil)
+	if err != nil {
+		return false, err
+	}
+
+	p = referenceframe.NewPoseInFrame("world",
+		spatialmath.Compose(p.Pose(), spatialmath.NewPoseFromPoint(r3.Vector{0, 0, o.conf.offset()})))
+
+	return o.motion.Move(ctx,
+		motion.MoveReq{
+			ComponentName: o.toMove.Name(),
+			Destination:   p,
+		})
 }
 
 func (o *ObstacleOpenBox) Open(ctx context.Context, extra map[string]interface{}) error {
