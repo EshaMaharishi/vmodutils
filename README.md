@@ -53,6 +53,16 @@ Configure this with a frame and you can have obstacles on your robot without hav
 }
 ```
 
+## obstacle open box
+Configure this with a frame and you can have obstacles on your robot without having to hard code.
+```
+{
+  "length" : 10,
+  "width" : 10,
+  "height" : 10
+}
+```
+
 ## single arm motion service
 ```
 {
