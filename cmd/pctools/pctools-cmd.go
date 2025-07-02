@@ -10,6 +10,7 @@ import (
 	"go.viam.com/rdk/components/camera"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
+	"go.viam.com/rdk/services/vision"
 
 	"github.com/erh/vmodutils"
 )
@@ -28,6 +29,7 @@ func realMain() error {
 	host := flag.String("host", "", "hostname")
 	cmd := flag.String("cmd", "", "command")
 	cameraName := flag.String("camera", "", "camera to use")
+	visionName := flag.String("vision", "", "vision service")
 	out := flag.String("out", "", "output file")
 	in := flag.String("in", "", "input file")
 
@@ -58,13 +60,7 @@ func realMain() error {
 			return err
 		}
 
-		f, err := os.OpenFile(*out, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		return pointcloud.ToPCD(pc, f, pointcloud.PCDBinary)
+		return writePCToFile(*out, pc)
 	}
 
 	if *cmd == "realsense-all" {
@@ -134,6 +130,45 @@ func realMain() error {
 		return nil
 	}
 
+	if *cmd == "objects" {
+		machine, err := vmodutils.ConnectToHostFromCLIToken(ctx, *host, logger)
+		if err != nil {
+			return err
+		}
+		defer machine.Close(ctx)
+
+		myVision, err := vision.FromRobot(machine, *visionName)
+		if err != nil {
+			return err
+		}
+
+		objs, err := myVision.GetObjectPointClouds(ctx, "", nil)
+		if err != nil {
+			return err
+		}
+
+		for idx, o := range objs {
+			fn := fmt.Sprintf("obj-%s-%d.pcd", o.Geometry.Label(), idx)
+			err := writePCToFile(fn, o)
+			if err != nil {
+				return err
+			}
+			logger.Infof("wrote %s", fn)
+		}
+
+		return nil
+	}
+
 	return fmt.Errorf("invalid command [%s]", *cmd)
 
+}
+
+func writePCToFile(fn string, pc pointcloud.PointCloud) error {
+	f, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return pointcloud.ToPCD(pc, f, pointcloud.PCDBinary)
 }
