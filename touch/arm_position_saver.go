@@ -138,8 +138,8 @@ func (aps *ArmPositionSaver) GetPosition(ctx context.Context, extra map[string]i
 	return 0, nil
 }
 
-func (aps *ArmPositionSaver) GetNumberOfPositions(ctx context.Context, extra map[string]interface{}) (uint32, error) {
-	return 3, nil
+func (aps *ArmPositionSaver) GetNumberOfPositions(ctx context.Context, extra map[string]interface{}) (uint32, []string, error) {
+	return 3, []string{"idle", "update config", "go to"}, nil
 }
 
 func (aps *ArmPositionSaver) saveCurrentPosition(ctx context.Context) error {

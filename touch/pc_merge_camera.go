@@ -10,6 +10,7 @@ import (
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/rimage"
+	"go.viam.com/rdk/spatialmath"
 
 	"github.com/erh/vmodutils"
 )
@@ -135,4 +136,8 @@ func (mapc *MergeCamera) Properties(ctx context.Context) (camera.Properties, err
 	return camera.Properties{
 		SupportsPCD: true,
 	}, nil
+}
+
+func (mapc *MergeCamera) Geometries(ctx context.Context, _ map[string]interface{}) ([]spatialmath.Geometry, error) {
+	return nil, nil
 }

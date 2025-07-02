@@ -104,6 +104,10 @@ func (o *Obstacle) IsMoving(context.Context) (bool, error) {
 	return false, nil
 }
 
+func (o *Obstacle) IsHoldingSomething(ctx context.Context, extra map[string]interface{}) (gripper.HoldingStatus, error) {
+	return gripper.HoldingStatus{false, nil}, nil
+}
+
 func (o *Obstacle) Stop(context.Context, map[string]interface{}) error {
 	return nil
 }

@@ -13,6 +13,7 @@ import (
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/rimage"
 	"go.viam.com/rdk/robot"
+	"go.viam.com/rdk/spatialmath"
 
 	"github.com/erh/vmodutils"
 )
@@ -137,4 +138,8 @@ func (cc *cropCamera) Properties(ctx context.Context) (camera.Properties, error)
 
 func (cc *cropCamera) Close(ctx context.Context) error {
 	return cc.client.Close(ctx)
+}
+
+func (cc *cropCamera) Geometries(ctx context.Context, _ map[string]interface{}) ([]spatialmath.Geometry, error) {
+	return nil, nil
 }
