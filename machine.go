@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"go.viam.com/rdk/app"
 	"go.viam.com/rdk/cli"
@@ -103,7 +104,6 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 	if err != nil {
 		return err
 	}
-
 	cs, ok := part.RobotConfig["components"].([]interface{})
 	if !ok {
 		return fmt.Errorf("no components %T", part.RobotConfig["components"])
@@ -112,6 +112,7 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 	if ok {
 		cs = append(cs, services...)
 	}
+	fragments, hasFragments := part.RobotConfig["fragments"].([]interface{})
 
 	found := false
 
@@ -128,12 +129,139 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 		found = true
 	}
 
+	// check fragments
+	if !found && hasFragments {
+		for idx, frag := range fragments {
+			id, ok := frag.(string)
+			if !ok {
+				return fmt.Errorf("config bad %d: %T", idx, frag)
+			}
+			fragModString := ""
+			// first, determine which fragment has the component.
+			found, fragModString, err = findComponentInFragment(ctx, c, id, name)
+			if err != nil {
+				continue
+			}
+			if found {
+				// find fragment_mods. swallow the error because these are not required
+				fragMods, _ := part.RobotConfig["fragment_mods"].([]interface{})
+				foundSet := false
+
+				for _, fragMod := range fragMods {
+					fragModc, ok := fragMod.(map[string]interface{})
+					if !ok {
+						return fmt.Errorf("config bad %d: %T", idx, fragMod)
+					}
+					// check if we found the fragment that we want to modify
+					if fragModc["fragment_id"] != id {
+						continue
+					}
+					// find the mods for the fragment. app will strip out a defined mod that is empty so we do not have to check for that
+					mods, ok := fragModc["mods"].([]interface{})
+					if !ok {
+						// we did not find mods for the fragment, break the loop and create our own
+						break
+					}
+					//
+					for indexMods, mod := range mods {
+						modc, _ := mod.(map[string]interface{})
+						sets, ok := modc["$set"].(map[string]interface{})
+						if !ok {
+							// there are no mods set for this fragment. break out to create one
+							break
+						}
+
+						// check the keys to see if the set if for our component
+						for k := range sets {
+							if strings.Contains(k, fragModString) {
+								foundSet = true
+								break
+							}
+						}
+						if !foundSet {
+							continue
+						}
+						// we found our component, go ahead and replace the component's mods
+						attrMod := attrMapToFragmentMod(fragModString, newAttr)
+						mods[indexMods] = attrMod
+						foundSet = true
+
+						break
+					}
+					// we found mods but we did not find any for our component. add a new set of mods
+					if !foundSet {
+						fragModc["mods"] = append(mods, attrMapToFragmentMod(fragModString, newAttr))
+						foundSet = true
+					}
+
+				}
+				// if we did not find any mods for our fragment. so add everything
+				if !foundSet {
+					newFragMod := map[string]interface{}{"fragment_id": id}
+					newMods := attrMapToFragmentMod(fragModString, newAttr)
+					newFragMod["mods"] = []map[string]interface{}{newMods}
+					fragMods = append(fragMods, newFragMod)
+					part.RobotConfig["fragment_mods"] = fragMods
+				}
+				// stop looking at fragments
+				break
+			}
+		}
+	}
 	if !found {
 		return fmt.Errorf("didn't find component with name %v", name.ShortName())
 	}
 
 	_, err = c.UpdateRobotPart(ctx, id, part.Name, part.RobotConfig)
 	return err
+}
+
+func attrMapToFragmentMod(fragModString string, newAttr utils.AttributeMap) map[string]interface{} {
+	fragMods := map[string]interface{}{}
+	mods := map[string]interface{}{}
+	for key, value := range newAttr {
+		mods[fmt.Sprintf("%s.%s", fragModString, key)] = value
+	}
+	fragMods["$set"] = mods
+	return fragMods
+}
+
+func findComponentInFragment(ctx context.Context, c *app.AppClient, id string, name resource.Name) (bool, string, error) {
+
+	frag, err := c.GetFragment(ctx, id)
+	if err != nil {
+		return false, "", err
+	}
+	// components might not be defined, so it is ok to swallow the error here
+	cs, _ := frag.Fragment["components"].([]interface{})
+	for idx, cc := range cs {
+		ccc, ok := cc.(map[string]interface{})
+		if !ok {
+			return false, "", fmt.Errorf("config bad %d: %T", idx, cc)
+		}
+		if ccc["name"] != name.ShortName() {
+			continue
+		}
+		// we found the component within this fragment, return the fragment mod string
+		return true, fmt.Sprintf("components.%s.attributes", name.ShortName()), nil
+	}
+	// services might not be defined, so it is ok to swallow the error here
+	services, _ := frag.Fragment["services"].([]interface{})
+	for idx, sc := range services {
+		scc, ok := sc.(map[string]interface{})
+		if !ok {
+			return false, "", fmt.Errorf("config bad %d: %T", idx, sc)
+		}
+		if scc["name"] != name.ShortName() {
+			continue
+		}
+		// we found the service within this fragment, return the fragment mod string
+		return true, fmt.Sprintf("services.%s.attributes", name.ShortName()), nil
+
+	}
+
+	// we do not handle nested fragments currently. Unsure if this is possible but have not tested.
+	return false, "", nil
 }
 
 func FindDep(deps resource.Dependencies, n string) (resource.Resource, bool) {
