@@ -132,13 +132,13 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 	// check fragments
 	if !found && hasFragments {
 		for idx, frag := range fragments {
-			id, ok := frag.(string)
-			if !ok {
-				return fmt.Errorf("config bad %d: %T", idx, frag)
+			id, version, err := checkFragmentInConfig(frag)
+			if err != nil {
+				return err
 			}
 			fragModString := ""
 			// first, determine which fragment has the component.
-			found, fragModString, err = findComponentInFragment(ctx, c, id, name)
+			found, fragModString, err = findComponentInFragment(ctx, c, id, version, name)
 			if err != nil {
 				continue
 			}
@@ -226,12 +226,36 @@ func attrMapToFragmentMod(fragModString string, newAttr utils.AttributeMap) map[
 	return fragMods
 }
 
-func findComponentInFragment(ctx context.Context, c *app.AppClient, id string, name resource.Name) (bool, string, error) {
+// fragments can either be strings or a map[string]interface{}, so we need to check for both.
+func checkFragmentInConfig(frag interface{}) (string, *string, error) {
+	// check if we are just an id
+	id, ok := frag.(string)
+	if ok {
+		return id, nil, nil
+	}
+	// check if we are a map[string]interface{}
+	fragc, ok := frag.(map[string]interface{})
+	if !ok {
+		return "", nil, fmt.Errorf("fragment config does not match expected interface: %T", frag)
+	}
 
-	frag, err := c.GetFragment(ctx, id)
+	// fragments have to have ids, and for some reason we have a fragment without one
+	if id, ok = fragc["id"].(string); !ok {
+		return "", nil, fmt.Errorf("fragment is missing an id: %v", frag)
+	}
+	if version, ok := fragc["version"].(string); ok {
+		return id, &version, nil
+	}
+	return id, nil, nil
+}
+
+func findComponentInFragment(ctx context.Context, c *app.AppClient, id string, version *string, name resource.Name) (bool, string, error) {
+
+	frag, err := c.GetFragment(ctx, id, version)
 	if err != nil {
 		return false, "", err
 	}
+
 	// components might not be defined, so it is ok to swallow the error here
 	cs, _ := frag.Fragment["components"].([]interface{})
 	for idx, cc := range cs {
