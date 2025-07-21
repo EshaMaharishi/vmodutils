@@ -5,7 +5,7 @@ go 1.23.8
 require (
 	github.com/golang/geo v0.0.0-20230421003525-6adc56603217
 	github.com/google/uuid v1.6.0
-	go.viam.com/rdk v0.82.0
+	go.viam.com/rdk v0.84.1-0.20250721055812-83a3ca25929e
 	go.viam.com/test v1.2.4
 	go.viam.com/utils v0.1.152
 	neilpa.me/go-stl v0.5.0
@@ -213,7 +213,3 @@ require (
 	gorgonia.org/vecf64 v0.9.0 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
-
-replace go.viam.com/rdk => /Users/johnnicholson/viam-slam/rdk
-
-// replace go.viam.com/rdk => github.com/johnn193/rdk v0.0.0-20250718190108-bc72f8caadad
