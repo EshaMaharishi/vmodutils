@@ -15,7 +15,7 @@ func TestCheckSameInputs(t *testing.T) {
 		description     string
 		frag            interface{}
 		expectedID      string
-		expectedVersion *string
+		expectedVersion string
 		expectedErr     error
 	}{
 		{
@@ -32,13 +32,13 @@ func TestCheckSameInputs(t *testing.T) {
 			description:     "fragment is a map with a version",
 			frag:            map[string]interface{}{"id": id, "version": version},
 			expectedID:      id,
-			expectedVersion: &version,
+			expectedVersion: version,
 		},
 		{
 			description: "fragment has no id",
-			frag:        map[string]interface{}{"version": &version},
+			frag:        map[string]interface{}{"version": version},
 			expectedID:  "",
-			expectedErr: fmt.Errorf("fragment is missing an id: %v", map[string]interface{}{"version": &version}),
+			expectedErr: fmt.Errorf("fragment is missing an id: %v", map[string]interface{}{"version": version}),
 		},
 		{
 			description: "fragment is not an expected fragment config",

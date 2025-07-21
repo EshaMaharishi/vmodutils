@@ -227,30 +227,29 @@ func attrMapToFragmentMod(fragModString string, newAttr utils.AttributeMap) map[
 }
 
 // fragments can either be strings or a map[string]interface{}, so we need to check for both.
-func checkFragmentInConfig(frag interface{}) (string, *string, error) {
+func checkFragmentInConfig(frag interface{}) (string, string, error) {
 	// check if we are just an id
 	id, ok := frag.(string)
 	if ok {
-		return id, nil, nil
+		return id, "", nil
 	}
 	// check if we are a map[string]interface{}
 	fragc, ok := frag.(map[string]interface{})
 	if !ok {
-		return "", nil, fmt.Errorf("fragment config does not match expected interface: %T", frag)
+		return "", "", fmt.Errorf("fragment config does not match expected interface: %T", frag)
 	}
 
 	// fragments have to have ids, and for some reason we have a fragment without one
 	if id, ok = fragc["id"].(string); !ok {
-		return "", nil, fmt.Errorf("fragment is missing an id: %v", frag)
+		return "", "", fmt.Errorf("fragment is missing an id: %v", frag)
 	}
 	if version, ok := fragc["version"].(string); ok {
-		return id, &version, nil
+		return id, version, nil
 	}
-	return id, nil, nil
+	return id, "", nil
 }
 
-func findComponentInFragment(ctx context.Context, c *app.AppClient, id string, version *string, name resource.Name) (bool, string, error) {
-
+func findComponentInFragment(ctx context.Context, c *app.AppClient, id string, version string, name resource.Name) (bool, string, error) {
 	frag, err := c.GetFragment(ctx, id, version)
 	if err != nil {
 		return false, "", err
@@ -284,7 +283,23 @@ func findComponentInFragment(ctx context.Context, c *app.AppClient, id string, v
 
 	}
 
-	// we do not handle nested fragments currently. Unsure if this is possible but have not tested.
+	// check fragments within fragments
+	fragments, _ := frag.Fragment["fragments"].([]interface{})
+	for _, fc := range fragments {
+		idFrag, versionFrag, err := checkFragmentInConfig(fc)
+		if err != nil {
+			return false, "", err
+		}
+
+		found, fragModString, err := findComponentInFragment(ctx, c, idFrag, versionFrag, name)
+		if err != nil {
+			return false, "", err
+		}
+		if found {
+			return true, fragModString, nil
+		}
+	}
+	// we did not find the component in this fragment.
 	return false, "", nil
 }
 
