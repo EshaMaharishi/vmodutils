@@ -104,30 +104,12 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 	if err != nil {
 		return err
 	}
-	cs, ok := part.RobotConfig["components"].([]interface{})
-	if !ok {
-		return fmt.Errorf("no components %T", part.RobotConfig["components"])
+	found, err := updateComponentOrServiceConfig(part.RobotConfig, name, newAttr)
+	if err != nil {
+		return err
 	}
-	services, ok := part.RobotConfig["services"].([]interface{})
-	if ok {
-		cs = append(cs, services...)
-	}
+
 	fragments, hasFragments := part.RobotConfig["fragments"].([]interface{})
-
-	found := false
-
-	for idx, cc := range cs {
-		ccc, ok := cc.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("config bad %d: %T", idx, cc)
-		}
-		if ccc["name"] != name.ShortName() {
-			continue
-		}
-
-		ccc["attributes"] = newAttr
-		found = true
-	}
 
 	// check fragments
 	if !found && hasFragments {
@@ -155,6 +137,33 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 
 	_, err = c.UpdateRobotPart(ctx, id, part.Name, part.RobotConfig)
 	return err
+}
+
+func updateComponentOrServiceConfig(robotConfig map[string]interface{}, name resource.Name, newAttr utils.AttributeMap) (bool, error) {
+	cs, ok := robotConfig["components"].([]interface{})
+	if !ok {
+		return false, fmt.Errorf("no components %T", robotConfig["components"])
+	}
+	services, ok := robotConfig["services"].([]interface{})
+	if ok {
+		cs = append(cs, services...)
+	}
+
+	found := false
+
+	for idx, cc := range cs {
+		ccc, ok := cc.(map[string]interface{})
+		if !ok {
+			return false, fmt.Errorf("config bad %d: %T", idx, cc)
+		}
+		if ccc["name"] != name.ShortName() {
+			continue
+		}
+
+		ccc["attributes"] = newAttr
+		found = true
+	}
+	return found, nil
 }
 
 func updateFragmentConfig(id, fragModString string, robotConfig, fragmentMod map[string]interface{}) error {
