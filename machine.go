@@ -119,7 +119,7 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 				return err
 			}
 			// first, determine which fragment has the component.
-			fragModString, err := findComponentInFragment(ctx, c, fID, version, name)
+			fragModString, err := findComponentInFragment(ctx, c.GetFragment, fID, version, name)
 			if err != nil {
 				continue
 			}
@@ -242,8 +242,8 @@ func checkFragmentInConfig(frag interface{}) (string, string, error) {
 	return id, "", nil
 }
 
-func findComponentInFragment(ctx context.Context, c *app.AppClient, id string, version string, name resource.Name) (string, error) {
-	frag, err := c.GetFragment(ctx, id, version)
+func findComponentInFragment(ctx context.Context, getFragmentFunc func(context.Context, string, string) (*app.Fragment, error), id string, version string, name resource.Name) (string, error) {
+	frag, err := getFragmentFunc(ctx, id, version)
 	if err != nil {
 		return "", err
 	}
@@ -284,7 +284,7 @@ func findComponentInFragment(ctx context.Context, c *app.AppClient, id string, v
 			return "", err
 		}
 
-		fragModString, err := findComponentInFragment(ctx, c, idFrag, versionFrag, name)
+		fragModString, err := findComponentInFragment(ctx, getFragmentFunc, idFrag, versionFrag, name)
 		if err != nil {
 			return "", err
 		}

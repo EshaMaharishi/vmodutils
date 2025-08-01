@@ -1,13 +1,20 @@
 package vmodutils
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
+	"go.viam.com/rdk/app"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/utils"
 	"go.viam.com/test"
 )
+
+type MockAppClient struct {
+	machineConfigs map[string]interface{}
+	fragments      map[string]interface{}
+}
 
 func helperMachineConfig(componentNames, serviceNames, fragmentIDs []string) map[string]interface{} {
 	components := []interface{}{}
@@ -19,9 +26,23 @@ func helperMachineConfig(componentNames, serviceNames, fragmentIDs []string) map
 		services = append(services, map[string]interface{}{"name": s})
 	}
 
+	fragments := []interface{}{}
+	for _, f := range fragmentIDs {
+		fragments = append(fragments, f)
+	}
 	return map[string]interface{}{"components": components,
 		"services":  services,
-		"fragments": fragmentIDs}
+		"fragments": fragments}
+}
+
+func (c *MockAppClient) GetFragment(ctx context.Context, id, version string) (*app.Fragment, error) {
+	// ignoring versions for tests
+	frag, ok := c.fragments[id].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("fragment %v not found", id)
+	}
+
+	return &app.Fragment{ID: id, Fragment: frag}, nil
 }
 
 // simple helper function for tests
@@ -49,6 +70,55 @@ func getAttrFromConfigForTests(machine map[string]interface{}, name string) inte
 	return nil
 }
 
+func TestFindComponentInFragment(t *testing.T) {
+	f0 := helperMachineConfig([]string{"c1", "c2"}, []string{"s1", "s2"}, []string{"f1", "f2"})
+	f1 := helperMachineConfig([]string{"c3", "c4"}, []string{"s3", "s4"}, []string{"f3"})
+	f2 := helperMachineConfig([]string{"c5", "c6"}, []string{"s5", "s6"}, []string{})
+	f3 := helperMachineConfig([]string{"c7", "c8"}, []string{"s7", "s8"}, []string{})
+	myMock := MockAppClient{fragments: map[string]interface{}{"f0": f0, "f1": f1, "f2": f2, "f3": f3}}
+	cases := []struct {
+		description           string
+		componentName         string
+		expectedFragModString string
+		expectedErr           error
+	}{
+		{
+			description:           "the component is in the first fragment",
+			componentName:         "c1",
+			expectedFragModString: "components.c1.attributes",
+		},
+		{
+			description:           "the service is in the first fragment",
+			componentName:         "s2",
+			expectedFragModString: "services.s2.attributes",
+		},
+		{
+			description:           "the component is in a nested fragment",
+			componentName:         "c5",
+			expectedFragModString: "components.c5.attributes",
+		},
+		{
+			description:           "the service is in a nested nested fragment",
+			componentName:         "s7",
+			expectedFragModString: "services.s7.attributes",
+		},
+		{
+			description:           "the component cannot be found",
+			componentName:         "not-here",
+			expectedFragModString: "",
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.description, func(t *testing.T) {
+			// make a machine for the test
+			name := resource.NewName(resource.APINamespaceRDK.WithComponentType("test"), tt.componentName)
+			fragModString, err := findComponentInFragment(context.Background(), myMock.GetFragment, "f0", "", name)
+			test.That(t, err, test.ShouldResemble, tt.expectedErr)
+			test.That(t, tt.expectedFragModString, test.ShouldEqual, fragModString)
+		})
+	}
+}
+
 func TestUpdateComponentOrServiceConfig(t *testing.T) {
 	newAttr := utils.AttributeMap{"attr1": true}
 	cases := []struct {
@@ -72,13 +142,13 @@ func TestUpdateComponentOrServiceConfig(t *testing.T) {
 		},
 		{
 			description:   "the component cannot be found",
-			componentName: "c3",
+			componentName: "not-here",
 			shouldBeFound: false,
 			machineConfig: helperMachineConfig([]string{"c1", "c2"}, []string{"s1", "s2"}, []string{"f1", "f2"}),
 		},
 		{
 			description:   "really bad machine config",
-			componentName: "not-here",
+			componentName: "c1",
 			shouldBeFound: false,
 			machineConfig: nil,
 			expectedErr:   fmt.Errorf("no components %T", nil),
