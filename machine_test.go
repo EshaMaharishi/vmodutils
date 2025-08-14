@@ -2,6 +2,7 @@ package vmodutils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -119,6 +120,55 @@ func TestFindComponentInFragment(t *testing.T) {
 	}
 }
 
+func TestUpdateComponentCloudAttributes(t *testing.T) {
+	newAttr := utils.AttributeMap{"attr1": true}
+	f1 := helperMachineConfig([]string{"c3", "c4"}, []string{"s3", "s4"}, []string{"f3"})
+	f2 := helperMachineConfig([]string{"c5", "c6"}, []string{"s5", "s6"}, []string{})
+	f3 := helperMachineConfig([]string{"c7", "c8"}, []string{"s7", "s8"}, []string{})
+	myMock := MockAppClient{fragments: map[string]interface{}{"f1": f1, "f2": f2, "f3": f3}}
+	cases := []struct {
+		description   string
+		componentName string
+		expectedErr   error
+		machineConfig map[string]interface{}
+	}{
+		{
+			description:   "the component is in the machine",
+			componentName: "c1",
+			machineConfig: helperMachineConfig([]string{"c1", "c2"}, []string{"s1", "s2"}, []string{"f1", "f2"}),
+		},
+		{
+			description:   "the service is in the machine",
+			componentName: "s2",
+			machineConfig: helperMachineConfig([]string{"c1", "c2"}, []string{"s1", "s2"}, []string{"f1", "f2"}),
+		},
+		{
+			description:   "the component cannot be found",
+			componentName: "not-here",
+			expectedErr:   errors.New("didn't find component with name not-here"),
+			machineConfig: helperMachineConfig([]string{"c1", "c2"}, []string{"s1", "s2"}, []string{"f1", "f2"}),
+		},
+		{
+			description:   "really bad machine config",
+			componentName: "c1",
+			machineConfig: nil,
+			expectedErr:   fmt.Errorf("no components %T", nil),
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.description, func(t *testing.T) {
+			// make a machine for the test
+			name := resource.NewName(resource.APINamespaceRDK.WithComponentType("test"), tt.componentName)
+			err := updateComponentCloudAttributes(context.Background(), tt.machineConfig, myMock.GetFragment, name, newAttr)
+			test.That(t, err, test.ShouldResemble, tt.expectedErr)
+			if tt.expectedErr == nil {
+				updatedAttrs := getAttrFromConfigForTests(tt.machineConfig, tt.componentName)
+				test.That(t, updatedAttrs, test.ShouldResemble, newAttr)
+			}
+		})
+	}
+}
+
 func TestUpdateComponentOrServiceConfig(t *testing.T) {
 	newAttr := utils.AttributeMap{"attr1": true}
 	cases := []struct {
@@ -159,6 +209,7 @@ func TestUpdateComponentOrServiceConfig(t *testing.T) {
 			// make a machine for the test
 			name := resource.NewName(resource.APINamespaceRDK.WithComponentType("test"), tt.componentName)
 			found, err := updateComponentOrServiceConfig(tt.machineConfig, name, newAttr)
+
 			test.That(t, found, test.ShouldEqual, tt.shouldBeFound)
 			test.That(t, err, test.ShouldResemble, tt.expectedErr)
 			if tt.shouldBeFound {
@@ -168,6 +219,7 @@ func TestUpdateComponentOrServiceConfig(t *testing.T) {
 		})
 	}
 }
+
 func TestGetFragmentId(t *testing.T) {
 	id := "id"
 	version := "version"

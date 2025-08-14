@@ -104,12 +104,22 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 	if err != nil {
 		return err
 	}
-	found, err := updateComponentOrServiceConfig(part.RobotConfig, name, newAttr)
+
+	if err = updateComponentCloudAttributes(ctx, part.RobotConfig, c.GetFragment, name, newAttr); err != nil {
+		return err
+	}
+
+	_, err = c.UpdateRobotPart(ctx, id, part.Name, part.RobotConfig)
+	return err
+}
+
+func updateComponentCloudAttributes(ctx context.Context, robotConfig map[string]interface{}, getFragmentFunc func(context.Context, string, string) (*app.Fragment, error), name resource.Name, newAttr utils.AttributeMap) error {
+	found, err := updateComponentOrServiceConfig(robotConfig, name, newAttr)
 	if err != nil {
 		return err
 	}
 
-	fragments, hasFragments := part.RobotConfig["fragments"].([]interface{})
+	fragments, hasFragments := robotConfig["fragments"].([]interface{})
 
 	// check fragments
 	if !found && hasFragments {
@@ -119,12 +129,13 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 				return err
 			}
 			// first, determine which fragment has the component.
-			fragModString, err := findComponentInFragment(ctx, c.GetFragment, fID, version, name)
+			fragModString, err := findComponentInFragment(ctx, getFragmentFunc, fID, version, name)
 			if err != nil {
-				continue
+				// something about the config in the fragment is broken
+				return err
 			}
 			if fragModString != "" {
-				updateFragmentConfig(fID, fragModString, part.RobotConfig, attrMapToFragmentMod(fragModString, newAttr))
+				updateFragmentConfig(fID, fragModString, robotConfig, attrMapToFragmentMod(fragModString, newAttr))
 				found = true
 				break
 			}
@@ -134,9 +145,7 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 	if !found {
 		return fmt.Errorf("didn't find component with name %v", name.ShortName())
 	}
-
-	_, err = c.UpdateRobotPart(ctx, id, part.Name, part.RobotConfig)
-	return err
+	return nil
 }
 
 func updateComponentOrServiceConfig(robotConfig map[string]interface{}, name resource.Name, newAttr utils.AttributeMap) (bool, error) {
