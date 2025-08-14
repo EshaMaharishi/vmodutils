@@ -10,7 +10,7 @@ import (
 
 	"go.viam.com/rdk/components/arm"
 	"go.viam.com/rdk/logging"
-	"go.viam.com/rdk/motionplan"
+	"go.viam.com/rdk/motionplan/armplanning"
 	"go.viam.com/rdk/referenceframe"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/robot"
@@ -59,7 +59,7 @@ func (cfg *SingleArmConfig) allFrames() []string {
 }
 
 type fsCacheEntry struct {
-	fs referenceframe.FrameSystem
+	fs *referenceframe.FrameSystem
 
 	plansLock sync.Mutex
 	plans     map[int][][]referenceframe.Input
@@ -196,7 +196,7 @@ func (s *singleArmService) getPlan(ctx context.Context, req motion.MoveReq, fs *
 	return myPlan, nil
 }
 
-func (s *singleArmService) createPlan(ctx context.Context, req motion.MoveReq, myFs referenceframe.FrameSystem, startJoints []referenceframe.Input) ([][]referenceframe.Input, error) {
+func (s *singleArmService) createPlan(ctx context.Context, req motion.MoveReq, myFs *referenceframe.FrameSystem, startJoints []referenceframe.Input) ([][]referenceframe.Input, error) {
 	var plan [][]referenceframe.Input
 	var err error
 	for i := 0; i < 3; i++ {
@@ -209,22 +209,20 @@ func (s *singleArmService) createPlan(ctx context.Context, req motion.MoveReq, m
 	return nil, err
 }
 
-func (s *singleArmService) createPlanSeed(ctx context.Context, req motion.MoveReq, myFs referenceframe.FrameSystem, startJoints []referenceframe.Input, rseed int) ([][]referenceframe.Input, error) {
+func (s *singleArmService) createPlanSeed(ctx context.Context, req motion.MoveReq, myFs *referenceframe.FrameSystem, startJoints []referenceframe.Input, rseed int) ([][]referenceframe.Input, error) {
 
-	planReq := &motionplan.PlanRequest{
-		Logger:      s.logger,
+	planReq := &armplanning.PlanRequest{
 		FrameSystem: myFs,
-		Goals: []*motionplan.PlanState{
-			motionplan.NewPlanState(referenceframe.FrameSystemPoses{req.ComponentName.ShortName(): req.Destination}, nil),
+		Goals: []*armplanning.PlanState{
+			armplanning.NewPlanState(referenceframe.FrameSystemPoses{req.ComponentName.ShortName(): req.Destination}, nil),
 		},
-		StartState:  motionplan.NewPlanState(nil, referenceframe.FrameSystemInputs{s.cfg.Arm: startJoints}),
+		StartState:  armplanning.NewPlanState(nil, referenceframe.FrameSystemInputs{s.cfg.Arm: startJoints}),
 		Constraints: req.Constraints,
 		WorldState:  req.WorldState,
-		Options:     map[string]interface{}{"rseed": rseed},
 	}
 
 	startTime := time.Now()
-	plan, err := motionplan.PlanMotion(ctx, planReq)
+	plan, err := armplanning.PlanMotion(ctx, s.logger, planReq)
 	if err != nil {
 		return nil, err
 	}
