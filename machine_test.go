@@ -168,7 +168,7 @@ func TestUpdateComponentOrServiceConfig(t *testing.T) {
 		})
 	}
 }
-func TestCheckSameInputs(t *testing.T) {
+func TestGetFragmentId(t *testing.T) {
 	id := "id"
 	version := "version"
 	reallyBadFrag := 25
@@ -210,7 +210,7 @@ func TestCheckSameInputs(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.description, func(t *testing.T) {
-			idOut, versionOut, err := checkFragmentInConfig(tt.frag)
+			idOut, versionOut, err := getFragmentId(tt.frag)
 			test.That(t, idOut, test.ShouldEqual, tt.expectedID)
 			test.That(t, versionOut, test.ShouldResemble, tt.expectedVersion)
 			test.That(t, err, test.ShouldResemble, tt.expectedErr)

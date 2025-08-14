@@ -114,7 +114,7 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 	// check fragments
 	if !found && hasFragments {
 		for _, frag := range fragments {
-			fID, version, err := checkFragmentInConfig(frag)
+			fID, version, err := getFragmentId(frag)
 			if err != nil {
 				return err
 			}
@@ -219,8 +219,9 @@ func attrMapToFragmentMod(fragModString string, newAttr utils.AttributeMap) map[
 	return fragMods
 }
 
-// fragments can either be strings or a map[string]interface{}, so we need to check for both.
-func checkFragmentInConfig(frag interface{}) (string, string, error) {
+// getFragmentId returns the fragment id and the version of the fragment being used.
+// fragments can be represented as strings or a map[string]interface{}, so we need to check for both.
+func getFragmentId(frag interface{}) (string, string, error) {
 	// check if we are just an id
 	id, ok := frag.(string)
 	if ok {
@@ -279,7 +280,7 @@ func findComponentInFragment(ctx context.Context, getFragmentFunc func(context.C
 	// check fragments within fragments
 	fragments, _ := frag.Fragment["fragments"].([]interface{})
 	for _, fc := range fragments {
-		idFrag, versionFrag, err := checkFragmentInConfig(fc)
+		idFrag, versionFrag, err := getFragmentId(fc)
 		if err != nil {
 			return "", err
 		}
