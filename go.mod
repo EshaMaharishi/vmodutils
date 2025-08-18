@@ -64,6 +64,10 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fullstorydev/grpcurl v1.8.6 // indirect
 	github.com/gen2brain/malgo v0.11.21 // indirect
+	github.com/go-audio/audio v1.0.0 // indirect
+	github.com/go-audio/riff v1.0.0 // indirect
+	github.com/go-audio/transforms v0.0.0-20180121090939-51830ccc35a5 // indirect
+	github.com/go-audio/wav v1.1.0 // indirect
 	github.com/go-fonts/liberation v0.3.0 // indirect
 	github.com/go-gl/mathgl v1.0.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
@@ -209,6 +213,7 @@ require (
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorgonia.org/tensor v0.9.24 // indirect
 	gorgonia.org/vecf32 v0.9.0 // indirect
