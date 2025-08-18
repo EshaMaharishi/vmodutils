@@ -175,6 +175,11 @@ func updateComponentOrServiceConfig(robotConfig map[string]interface{}, name res
 	return found, nil
 }
 
+// this function covers four possible states that a fragment configured on a machine can have.
+// 1. The machine has fragment mods for the component that we will replace.
+// 2. The machine has fragment mods for the fragment, but not for the component in question.
+// 3. The machine has fragment mods, but not for the fragment in question.
+// 4. The fragment is configured with no fragment mods on the machine.
 func updateFragmentConfig(id, fragModString string, robotConfig, fragmentMod map[string]interface{}) error {
 	fragMods, _ := robotConfig["fragment_mods"].([]interface{})
 	for _, fragMod := range fragMods {
@@ -192,7 +197,7 @@ func updateFragmentConfig(id, fragModString string, robotConfig, fragmentMod map
 			// we did not find mods for the fragment, break the loop and create our own
 			break
 		}
-		//
+		// the fragment has mods, check the sets to see if our component is configured
 		for indexMods, mod := range mods {
 			modc, _ := mod.(map[string]interface{})
 			sets, _ := modc["$set"].(map[string]interface{})
@@ -204,7 +209,6 @@ func updateFragmentConfig(id, fragModString string, robotConfig, fragmentMod map
 					return nil
 				}
 			}
-
 		}
 		// we found mods but we did not find any for our component. add a new set of mods
 		fragModc["mods"] = append(mods, fragmentMod)
