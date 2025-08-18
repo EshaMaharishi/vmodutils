@@ -37,5 +37,21 @@ func TestGetInt64FromMap(t *testing.T) {
 	i, ok = GetInt64FromMap(map[string]interface{}{"x": 5.1}, "x")
 	test.That(t, ok, test.ShouldBeTrue)
 	test.That(t, i, test.ShouldEqual, 5)
+}
+
+func TestGetFloat64FromMap(t *testing.T) {
+	_, ok := GetFloat64FromMap(map[string]interface{}{}, "x")
+	test.That(t, ok, test.ShouldBeFalse)
+
+	_, ok = GetFloat64FromMap(map[string]interface{}{"x": "Asd"}, "x")
+	test.That(t, ok, test.ShouldBeFalse)
+
+	f, ok := GetFloat64FromMap(map[string]interface{}{"x": 5}, "x")
+	test.That(t, ok, test.ShouldBeTrue)
+	test.That(t, f, test.ShouldEqual, 5)
+
+	f, ok = GetFloat64FromMap(map[string]interface{}{"x": 5.1}, "x")
+	test.That(t, ok, test.ShouldBeTrue)
+	test.That(t, f, test.ShouldEqual, 5.1)
 
 }
