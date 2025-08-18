@@ -105,7 +105,7 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 		return err
 	}
 
-	if err = updateComponentCloudAttributes(ctx, part.RobotConfig, c.GetFragment, name, newAttr); err != nil {
+	if err = updateComponentAttributesInPlace(ctx, part.RobotConfig, c.GetFragment, name, newAttr); err != nil {
 		return err
 	}
 
@@ -113,7 +113,7 @@ func UpdateComponentCloudAttributes(ctx context.Context, c *app.AppClient, id st
 	return err
 }
 
-func updateComponentCloudAttributes(ctx context.Context, robotConfig map[string]interface{}, getFragmentFunc func(context.Context, string, string) (*app.Fragment, error), name resource.Name, newAttr utils.AttributeMap) error {
+func updateComponentAttributesInPlace(ctx context.Context, robotConfig map[string]interface{}, getFragmentFunc func(context.Context, string, string) (*app.Fragment, error), name resource.Name, newAttr utils.AttributeMap) error {
 	found, err := updateComponentOrServiceConfig(robotConfig, name, newAttr)
 	if err != nil {
 		return err

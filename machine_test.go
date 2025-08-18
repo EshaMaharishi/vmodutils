@@ -120,7 +120,7 @@ func TestFindComponentInFragment(t *testing.T) {
 	}
 }
 
-func TestUpdateComponentCloudAttributes(t *testing.T) {
+func TestUpdateComponentAttributesInPlace(t *testing.T) {
 	newAttr := utils.AttributeMap{"attr1": true}
 	f1 := helperMachineConfig([]string{"c3", "c4"}, []string{"s3", "s4"}, []string{"f3"})
 	f2 := helperMachineConfig([]string{"c5", "c6"}, []string{"s5", "s6"}, []string{})
@@ -159,7 +159,7 @@ func TestUpdateComponentCloudAttributes(t *testing.T) {
 		t.Run(tt.description, func(t *testing.T) {
 			// make a machine for the test
 			name := resource.NewName(resource.APINamespaceRDK.WithComponentType("test"), tt.componentName)
-			err := updateComponentCloudAttributes(context.Background(), tt.machineConfig, myMock.GetFragment, name, newAttr)
+			err := updateComponentAttributesInPlace(context.Background(), tt.machineConfig, myMock.GetFragment, name, newAttr)
 			test.That(t, err, test.ShouldResemble, tt.expectedErr)
 			if tt.expectedErr == nil {
 				updatedAttrs := getAttrFromConfigForTests(tt.machineConfig, tt.componentName)
