@@ -90,7 +90,7 @@ func (mapc *MergeCamera) Image(ctx context.Context, mimeType string, extra map[s
 	return data, camera.ImageMetadata{mimeType}, err
 }
 
-func (mapc *MergeCamera) Images(ctx context.Context) ([]camera.NamedImage, resource.ResponseMetadata, error) {
+func (mapc *MergeCamera) Images(ctx context.Context, extra map[string]interface{}) ([]camera.NamedImage, resource.ResponseMetadata, error) {
 	pc, err := mapc.NextPointCloud(ctx)
 	if err != nil {
 		return nil, resource.ResponseMetadata{}, err
