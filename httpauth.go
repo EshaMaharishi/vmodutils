@@ -25,12 +25,12 @@ func HTTPAuthHeaderFromEnv(nameType string) (string, error) {
 	}
 
 	apiKeyId := os.Getenv(utils.APIKeyIDEnvVar)
-	if machine == "" {
+	if apiKeyId == "" {
 		return "", fmt.Errorf("need an api key id")
 	}
 
 	apiKey := os.Getenv(utils.APIKeyEnvVar)
-	if machine == "" {
+	if apiKey == "" {
 		return "", fmt.Errorf("need an api key")
 	}
 
