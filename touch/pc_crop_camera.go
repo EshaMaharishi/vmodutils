@@ -96,14 +96,18 @@ func (cc *cropCamera) Image(ctx context.Context, mimeType string, extra map[stri
 	return data, camera.ImageMetadata{mimeType}, err
 }
 
-func (cc *cropCamera) Images(ctx context.Context, extra map[string]interface{}) ([]camera.NamedImage, resource.ResponseMetadata, error) {
+func (cc *cropCamera) Images(ctx context.Context, filterSourceNames []string, extra map[string]interface{}) ([]camera.NamedImage, resource.ResponseMetadata, error) {
 	pc, err := cc.NextPointCloud(ctx)
 	if err != nil {
 		return nil, resource.ResponseMetadata{}, err
 	}
 	img := PCToImage(pc)
 
-	return []camera.NamedImage{{img, "cropped"}}, resource.ResponseMetadata{time.Now()}, nil
+	ni, err := camera.NamedImageFromImage(img, "cropped", "image/png")
+	if err != nil {
+		return nil, resource.ResponseMetadata{}, err
+	}
+	return []camera.NamedImage{ni}, resource.ResponseMetadata{time.Now()}, nil
 }
 
 func (cc *cropCamera) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {

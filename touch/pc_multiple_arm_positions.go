@@ -98,7 +98,7 @@ func (mapc *MultipleArmPosesCamera) Image(ctx context.Context, mimeType string, 
 	return nil, camera.ImageMetadata{}, fmt.Errorf("image not supported")
 }
 
-func (mapc *MultipleArmPosesCamera) Images(ctx context.Context, extra map[string]interface{}) ([]camera.NamedImage, resource.ResponseMetadata, error) {
+func (mapc *MultipleArmPosesCamera) Images(ctx context.Context, _ []string, _ map[string]interface{}) ([]camera.NamedImage, resource.ResponseMetadata, error) {
 	return nil, resource.ResponseMetadata{}, fmt.Errorf("image not supported")
 }
 
