@@ -65,12 +65,3 @@ Configure this with a frame and you can have obstacles on your robot without hav
   "motion" : <needed it to_move, but will also default to builtin>
 }
 ```
-
-## single arm motion service
-```
-{
- "arm" : "<arm name>", // required
- "fallback" : <bool>, // optional - fallback to builtin motion if threshold exceeded
- "max_joint_distance" : <float> // optional - default 1.5 - max InputsL2Distance before failing this version
-}
-```

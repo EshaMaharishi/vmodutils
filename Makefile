@@ -1,5 +1,5 @@
 
-bin/vmodutils: bin *.go cmd/module/*.go *.mod touch/*.go
+bin/vmodutils: bin *.go cmd/module/*.go *.mod touch/*.go meta.json
 	go build -o bin/vmodutils cmd/module/cmd.go
 
 test:

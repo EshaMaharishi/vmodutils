@@ -6,7 +6,6 @@ import (
 	"go.viam.com/rdk/components/switch"
 	"go.viam.com/rdk/module"
 	"go.viam.com/rdk/resource"
-	"go.viam.com/rdk/services/motion"
 
 	"github.com/erh/vmodutils/touch"
 )
@@ -19,7 +18,6 @@ func main() {
 		resource.APIModel{toggleswitch.API, touch.ArmPositionSaverModel},
 		resource.APIModel{gripper.API, touch.ObstacleModel},
 		resource.APIModel{gripper.API, touch.ObstacleOpenBoxModel},
-		resource.APIModel{motion.API, touch.SingleArmModel},
 	)
 
 }

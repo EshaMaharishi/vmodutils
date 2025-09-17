@@ -4,7 +4,6 @@ go 1.23.8
 
 require (
 	github.com/golang/geo v0.0.0-20230421003525-6adc56603217
-	github.com/google/uuid v1.6.0
 	go.viam.com/rdk v0.93.1-0.20250916160656-b1fe3efbd974
 	go.viam.com/test v1.2.4
 	go.viam.com/utils v0.1.167
@@ -71,7 +70,6 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-nlopt/nlopt v0.0.0-20230219125344-443d3362dcb5 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
@@ -85,6 +83,7 @@ require (
 	github.com/google/flatbuffers v2.0.6+incompatible // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.13.0 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
