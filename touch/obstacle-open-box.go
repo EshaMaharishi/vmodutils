@@ -160,12 +160,12 @@ func (o *ObstacleOpenBox) Grab(ctx context.Context, extra map[string]interface{}
 		return false, fmt.Errorf("obstacle opem box has no to_move specified")
 	}
 
-	p, err := o.motion.GetPose(ctx, o.name, "world", nil, nil)
+	p, err := o.motion.GetPose(ctx, o.name.ShortName(), "world", nil, nil)
 	if err != nil {
 		return false, err
 	}
 
-	p2, err := o.motion.GetPose(ctx, o.toMove.Name(), "world", nil, nil)
+	p2, err := o.motion.GetPose(ctx, o.conf.ToMove, "world", nil, nil)
 	if err != nil {
 		return false, err
 	}
@@ -188,7 +188,7 @@ func (o *ObstacleOpenBox) Grab(ctx context.Context, extra map[string]interface{}
 
 	_, err = o.motion.Move(ctx,
 		motion.MoveReq{
-			ComponentName: o.toMove.Name(),
+			ComponentName: o.conf.ToMove,
 			Destination:   p,
 			Constraints: &motionplan.Constraints{
 				OrientationConstraint: []motionplan.OrientationConstraint{{180}},

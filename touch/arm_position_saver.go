@@ -156,7 +156,7 @@ func (aps *ArmPositionSaver) saveCurrentPosition(ctx context.Context) error {
 
 		newConfig["joints"] = referenceframe.InputsToFloats(inputs)
 	} else {
-		p, err := aps.motion.GetPose(ctx, aps.arm.Name(), "world", nil, nil)
+		p, err := aps.motion.GetPose(ctx, aps.cfg.Arm, "world", nil, nil)
 		if err != nil {
 			return err
 		}
@@ -173,7 +173,7 @@ func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
 	}
 
 	if aps.motion != nil {
-		current, err := aps.motion.GetPose(ctx, aps.arm.Name(), "world", nil, nil)
+		current, err := aps.motion.GetPose(ctx, aps.cfg.Arm, "world", nil, nil)
 		if err != nil {
 			return err
 		}
@@ -195,7 +195,7 @@ func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
 		done, err := aps.motion.Move(
 			ctx,
 			motion.MoveReq{
-				ComponentName: resource.Name{Name: aps.cfg.Arm},
+				ComponentName: aps.cfg.Arm,
 				Destination:   pif,
 				WorldState:    nil,
 				Extra:         aps.cfg.Extra,

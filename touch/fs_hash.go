@@ -71,7 +71,7 @@ func HashPose(p spatialmath.Pose) int {
 }
 
 func HashMoveReq(req motion.MoveReq) int {
-	hash := HashString(req.ComponentName.ShortName())
+	hash := HashString(req.ComponentName)
 	hash += HashPoseInFrame(req.Destination)
 	hash += HashConstraints(req.Constraints)
 	hash += HashWorldState(req.WorldState)
