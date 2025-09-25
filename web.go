@@ -12,7 +12,7 @@ import (
 	"go.viam.com/rdk/utils"
 )
 
-func PrepInModuleServer(fs fs.FS, accessLog logging.Logger) (*http.ServeMux, *http.Server, error) {
+func PrepInModuleServer(fs fs.FS, accessLog logging.Logger, cookies []*http.Cookie) (*http.ServeMux, *http.Server, error) {
 
 	f, err := fs.Open("index.html")
 	if err != nil {
@@ -25,19 +25,21 @@ func PrepInModuleServer(fs fs.FS, accessLog logging.Logger) (*http.ServeMux, *ht
 	mux.Handle("/", http.FileServerFS(fs))
 
 	webServer := &http.Server{}
-	webServer.Handler = newCookieSetter(&loggingHandler{mux, accessLog}, accessLog)
+	webServer.Handler = newCookieSetter(&loggingHandler{mux, accessLog}, accessLog, cookies)
 
 	return mux, webServer, nil
 }
 
 // ----
 
-func newCookieSetter(handler http.Handler, logger logging.Logger) http.Handler {
+func newCookieSetter(handler http.Handler, logger logging.Logger, cookies []*http.Cookie) http.Handler {
 	cs := &cookieSetter{handler: handler}
 
-	cs.prepCookie(utils.MachineFQDNEnvVar, "host", logger)
-	cs.prepCookie(utils.APIKeyIDEnvVar, "api-key-id", logger)
-	cs.prepCookie(utils.APIKeyEnvVar, "api-key", logger)
+	cs.prepEnvCookie(utils.MachineFQDNEnvVar, "host", logger)
+	cs.prepEnvCookie(utils.APIKeyIDEnvVar, "api-key-id", logger)
+	cs.prepEnvCookie(utils.APIKeyEnvVar, "api-key", logger)
+
+	cs.cookies = append(cs.cookies, cookies...)
 
 	return cs
 }
@@ -47,7 +49,7 @@ type cookieSetter struct {
 	cookies []*http.Cookie
 }
 
-func (cs *cookieSetter) prepCookie(envVarName, cookieName string, logger logging.Logger) {
+func (cs *cookieSetter) prepEnvCookie(envVarName, cookieName string, logger logging.Logger) {
 	v := os.Getenv(envVarName)
 	if v == "" {
 		logger.Warnf("no value for env: %s cookie: %s", envVarName, cookieName)
@@ -91,9 +93,13 @@ func NewWebModuleAndStart(name resource.Name, fs fs.FS, logger logging.Logger, p
 }
 
 func NewWebModule(name resource.Name, fs fs.FS, logger logging.Logger) (*webModule, error) {
+	return NewWebModuleWithCookies(name, fs, logger, nil)
+}
+
+func NewWebModuleWithCookies(name resource.Name, fs fs.FS, logger logging.Logger, cookies []*http.Cookie) (*webModule, error) {
 	accessLog := logger.Sublogger("accessLog")
 
-	_, s, err := PrepInModuleServer(fs, accessLog)
+	_, s, err := PrepInModuleServer(fs, accessLog, cookies)
 	if err != nil {
 		return nil, err
 	}
