@@ -50,8 +50,9 @@ func newCropCamera(ctx context.Context, deps resource.Dependencies, config resou
 	}
 
 	cc := &cropCamera{
-		name: config.ResourceName(),
-		cfg:  newConf,
+		name:   config.ResourceName(),
+		cfg:    newConf,
+		logger: logger,
 	}
 
 	cc.src, err = camera.FromDependencies(deps, newConf.Src)
@@ -70,8 +71,9 @@ func newCropCamera(ctx context.Context, deps resource.Dependencies, config resou
 type cropCamera struct {
 	resource.AlwaysRebuild
 
-	name resource.Name
-	cfg  *CropCameraConfig
+	name   resource.Name
+	cfg    *CropCameraConfig
+	logger logging.Logger
 
 	src    camera.Camera
 	client robot.Robot
@@ -115,10 +117,14 @@ func (cc *cropCamera) DoCommand(ctx context.Context, cmd map[string]interface{})
 }
 
 func (cc *cropCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud, error) {
+	start := time.Now()
+
 	pc, err := cc.src.NextPointCloud(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	timeA := time.Since(start)
 
 	srcFrame := cc.cfg.Src
 	if cc.cfg.SrcFrame != "" {
@@ -130,8 +136,17 @@ func (cc *cropCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud
 		return nil, err
 	}
 
+	timeB := time.Since(start)
+
 	pc = PCCrop(pc, cc.cfg.Min, cc.cfg.Max)
+	timeC := time.Since(start)
+
+	if timeC > (time.Millisecond * 250) {
+		cc.logger.Infof("cropCamera::NextPointCloud timeA: %v timeB: %v timeC: %v", timeA, timeB, timeC)
+	}
+
 	return pc, nil
+
 }
 
 func (cc *cropCamera) Properties(ctx context.Context) (camera.Properties, error) {
