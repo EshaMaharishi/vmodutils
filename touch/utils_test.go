@@ -2,6 +2,7 @@ package touch
 
 import (
 	"image"
+	"image/color"
 	"image/png"
 	"math"
 	"os"
@@ -173,4 +174,22 @@ func TestGetApproachPoint(t *testing.T) {
 	test.That(t, p.X, test.ShouldAlmostEqual, c.X+57.7, 1)
 	test.That(t, p.Y, test.ShouldAlmostEqual, c.Y+57.7, 1)
 	test.That(t, p.Z, test.ShouldAlmostEqual, c.Z+57.7, 1)
+}
+
+func TestPCCropColor(t *testing.T) {
+	in, err := pointcloud.NewFromFile("data/test.pcd", "")
+	test.That(t, err, test.ShouldBeNil)
+
+	min := r3.Vector{-5000, -5000, -5000}
+	max := r3.Vector{5000, 5000, 5000}
+
+	filtered := PCCropWithColor(in, min, max, nil)
+	test.That(t, filtered.Size(), test.ShouldEqual, in.Size())
+
+	filtered = PCCropWithColor(in, min, max, []ColorFilter{
+		{color.RGBA{0, 0, 0, 0}, 100},
+	})
+
+	test.That(t, filtered.Size(), test.ShouldBeLessThan, in.Size())
+
 }

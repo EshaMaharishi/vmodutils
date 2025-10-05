@@ -35,6 +35,8 @@ type CropCameraConfig struct {
 	SrcFrame string `json:"src_frame"`
 	Min      r3.Vector
 	Max      r3.Vector
+
+	GoodColors []ColorFilter `json:"good_colors"`
 }
 
 func (ccc *CropCameraConfig) Validate(path string) ([]string, []string, error) {
@@ -196,7 +198,7 @@ func (cc *cropCamera) doNextPointCloud(ctx context.Context) (pointcloud.PointClo
 
 	timeB := time.Since(start)
 
-	pc = PCCrop(pc, cc.cfg.Min, cc.cfg.Max)
+	pc = PCCropWithColor(pc, cc.cfg.Min, cc.cfg.Max, cc.cfg.GoodColors)
 	timeC := time.Since(start)
 
 	if timeC > (time.Millisecond * 250) {

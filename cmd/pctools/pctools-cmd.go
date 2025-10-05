@@ -4,15 +4,20 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"image/color"
 	"image/png"
 	"os"
+
+	"github.com/golang/geo/r3"
 
 	"go.viam.com/rdk/components/camera"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
+	"go.viam.com/rdk/rimage"
 	"go.viam.com/rdk/services/vision"
 
 	"github.com/erh/vmodutils"
+	"github.com/erh/vmodutils/touch"
 )
 
 func main() {
@@ -32,6 +37,10 @@ func realMain() error {
 	visionName := flag.String("vision", "", "vision service")
 	out := flag.String("out", "", "output file")
 	in := flag.String("in", "", "input file")
+	colorDistance := flag.Float64("color-distance", 100, "")
+	colorRed := flag.Int("color-red", 255, "")
+	colorGreen := flag.Int("color-green", 255, "")
+	colorBlue := flag.Int("color-blue", 255, "")
 
 	flag.Parse()
 
@@ -91,7 +100,7 @@ func realMain() error {
 			return err
 		}
 
-		imgs, _, err := myCamera.Images(ctx)
+		imgs, _, err := myCamera.Images(ctx, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -105,7 +114,12 @@ func realMain() error {
 			}
 			defer f.Close()
 
-			err = png.Encode(f, i.Image)
+			theImage, err := i.Image(ctx)
+			if err != nil {
+				return err
+			}
+
+			err = png.Encode(f, theImage)
 			if err != nil {
 				return fmt.Errorf("cannot write (%s): %w", fn, err)
 			}
@@ -128,6 +142,38 @@ func realMain() error {
 		}
 		logger.Infof("size: %d", in.Size())
 		return nil
+	}
+
+	if *cmd == "image" {
+		in, err := pointcloud.NewFromFile(*in, "")
+		if err != nil {
+			return err
+		}
+		img := touch.PCToImage(in)
+		if *out == "" {
+			return fmt.Errorf("need an out")
+		}
+
+		return rimage.WriteImageToFile(*out, img)
+	}
+
+	if *cmd == "color-filter" {
+		in, err := pointcloud.NewFromFile(*in, "")
+		if err != nil {
+			return err
+		}
+		min := r3.Vector{-50000, -50000, -50000}
+		max := r3.Vector{min.X * -1, min.Y * -1, min.Z * -1}
+
+		filtered := touch.PCCropWithColor(in, min, max, []touch.ColorFilter{
+			{color.RGBA{uint8(*colorRed), uint8(*colorGreen), uint8(*colorBlue), 0}, *colorDistance},
+		})
+
+		if *out == "" {
+			return fmt.Errorf("need an out")
+		}
+
+		return writePCToFile(*out, filtered)
 	}
 
 	if *cmd == "objects" {

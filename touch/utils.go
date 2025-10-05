@@ -3,6 +3,7 @@ package touch
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"math"
 
 	"github.com/golang/geo/r3"
@@ -92,12 +93,46 @@ func InBox(pt, min, max r3.Vector) bool {
 }
 
 func PCCrop(pc pointcloud.PointCloud, min, max r3.Vector) pointcloud.PointCloud {
+	return PCCropWithColor(pc, min, max, nil)
+}
+
+type ColorFilter struct {
+	Color    color.RGBA
+	Distance float64
+}
+
+func EuclideanRGB(c1, c2 color.Color) float64 {
+	r1, g1, b1, _ := c1.RGBA()
+	r2, g2, b2, _ := c2.RGBA()
+
+	// RGBA() returns uint32 in range [0, 65535], convert to [0, 255]
+	r1, g1, b1 = r1>>8, g1>>8, b1>>8
+	r2, g2, b2 = r2>>8, g2>>8, b2>>8
+
+	dr := int(r1) - int(r2)
+	dg := int(g1) - int(g2)
+	db := int(b1) - int(b2)
+
+	return math.Sqrt(float64(dr*dr + dg*dg + db*db))
+}
+
+func PCCropWithColor(pc pointcloud.PointCloud, min, max r3.Vector, colorFilters []ColorFilter) pointcloud.PointCloud {
+
 	fixed := pointcloud.NewBasicEmpty()
 
 	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
-		if InBox(p, min, max) {
-			fixed.Set(p, d)
+		if !InBox(p, min, max) {
+			return true
 		}
+
+		for _, cf := range colorFilters {
+			dis := EuclideanRGB(cf.Color, d.Color())
+			if dis > cf.Distance {
+				return true
+			}
+		}
+
+		fixed.Set(p, d)
 		return true
 	})
 
