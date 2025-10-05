@@ -3,6 +3,7 @@ package touch
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang/geo/r3"
@@ -77,6 +78,12 @@ type cropCamera struct {
 
 	src    camera.Camera
 	client robot.Robot
+
+	lock               sync.Mutex
+	active             bool
+	lastPointCloud     pointcloud.PointCloud
+	lastPointCloudTime time.Time
+	lastPointCloudErr  error
 }
 
 func (cc *cropCamera) Name() resource.Name {
@@ -103,8 +110,12 @@ func (cc *cropCamera) Images(ctx context.Context, filterSourceNames []string, ex
 	if err != nil {
 		return nil, resource.ResponseMetadata{}, err
 	}
+	start := time.Now()
 	img := PCToImage(pc)
-
+	elapsed := time.Since(start)
+	if elapsed > (time.Millisecond * 100) {
+		cc.logger.Infof("PCToImage took %v", elapsed)
+	}
 	ni, err := camera.NamedImageFromImage(img, "cropped", "image/png")
 	if err != nil {
 		return nil, resource.ResponseMetadata{}, err
@@ -117,6 +128,52 @@ func (cc *cropCamera) DoCommand(ctx context.Context, cmd map[string]interface{})
 }
 
 func (cc *cropCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud, error) {
+
+	start := time.Now()
+	cc.lock.Lock()
+	if cc.active {
+		cc.lock.Unlock()
+		return cc.waitForPointCloudAfter(ctx, start)
+	}
+
+	cc.active = true
+	cc.lock.Unlock()
+
+	pc, err := cc.doNextPointCloud(ctx)
+
+	cc.lock.Lock()
+	cc.lastPointCloud = pc
+	cc.lastPointCloudErr = err
+	cc.lastPointCloudTime = time.Now()
+	cc.lock.Unlock()
+
+	return pc, err
+}
+
+func (cc *cropCamera) waitForPointCloudAfter(ctx context.Context, when time.Time) (pointcloud.PointCloud, error) {
+	for {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+
+		if time.Since(when) > time.Minute {
+			return nil, fmt.Errorf("waitForPointCloudAfter timed out after %v", time.Since(when))
+		}
+
+		cc.lock.Lock()
+		if cc.lastPointCloudTime.After(when) {
+			pc := cc.lastPointCloud
+			err := cc.lastPointCloudErr
+			cc.lock.Unlock()
+			return pc, err
+		}
+		cc.lock.Unlock()
+
+		time.Sleep(time.Millisecond * 50)
+	}
+}
+
+func (cc *cropCamera) doNextPointCloud(ctx context.Context) (pointcloud.PointCloud, error) {
 	start := time.Now()
 
 	pc, err := cc.src.NextPointCloud(ctx)
