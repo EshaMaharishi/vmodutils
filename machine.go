@@ -12,6 +12,7 @@ import (
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/robot"
 	"go.viam.com/rdk/robot/client"
+	"go.viam.com/rdk/robot/framesystem"
 	"go.viam.com/rdk/utils"
 	"go.viam.com/utils/rpc"
 )
@@ -27,6 +28,13 @@ func MachineToDependencies(client robot.Robot) (resource.Dependencies, error) {
 		}
 		deps[n] = r
 	}
+
+	r, ok := client.(resource.Resource)
+	if !ok {
+		return nil, fmt.Errorf("client isn't a resource.Resource")
+	}
+
+	deps[framesystem.PublicServiceName] = r
 
 	return deps, nil
 }
