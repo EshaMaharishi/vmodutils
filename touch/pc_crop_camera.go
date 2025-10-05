@@ -142,6 +142,7 @@ func (cc *cropCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud
 	pc, err := cc.doNextPointCloud(ctx)
 
 	cc.lock.Lock()
+	cc.active = false
 	cc.lastPointCloud = pc
 	cc.lastPointCloudErr = err
 	cc.lastPointCloudTime = time.Now()
