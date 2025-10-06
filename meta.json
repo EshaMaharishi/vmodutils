@@ -41,6 +41,10 @@
         "model": "erh:vmodutils:obstacle-open-box",
         "markdown_link": "README.md#obstacle-open-box",
         "short_description": "open box obstacle, doesn't do anything but get in the way"
+    },
+    {
+        "api": "rdk:service:vision",
+        "model": "erh:vmodutils:pc-cluster"
     }
   ],
   "applications": null,

@@ -42,6 +42,10 @@ func realMain() error {
 	colorGreen := flag.Int("color-green", 255, "")
 	colorBlue := flag.Int("color-blue", 255, "")
 
+	maxDistance := flag.Float64("max-distance", 30, "")
+	minPointsPerSegment := flag.Int("min-points-per-segment", 20, "")
+	minPointsPerCluster := flag.Int("min-points-per-cluster", 100, "")
+
 	flag.Parse()
 
 	if *cmd == "" {
@@ -174,6 +178,32 @@ func realMain() error {
 		}
 
 		return writePCToFile(*out, filtered)
+	}
+
+	if *cmd == "cluster" {
+		in, err := pointcloud.NewFromFile(*in, "")
+		if err != nil {
+			return err
+		}
+
+		clusters, err := touch.Cluster(in, *maxDistance, *minPointsPerSegment, *minPointsPerCluster)
+		if err != nil {
+			return err
+		}
+
+		logger.Infof("got %d clusters", len(clusters))
+
+		for idx, o := range clusters {
+			fn := fmt.Sprintf("cluster-%d.pcd", idx)
+			err := writePCToFile(fn, o)
+			if err != nil {
+				return err
+			}
+			md := o.MetaData()
+			logger.Infof("wrote %s size: %d center: %v", fn, o.Size(), md.Center())
+		}
+
+		return nil
 	}
 
 	if *cmd == "objects" {
