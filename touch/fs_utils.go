@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	"go.viam.com/rdk/referenceframe"
-	"go.viam.com/rdk/robot"
 	"go.viam.com/rdk/robot/framesystem"
 )
 
-func FrameSystemWithSomeParts(ctx context.Context, myRobot robot.Robot, names []string, transforms []*referenceframe.LinkInFrame) (*referenceframe.FrameSystem, error) {
+func FrameSystemWithSomeParts(ctx context.Context, myRobot framesystem.Service, names []string, transforms []*referenceframe.LinkInFrame) (*referenceframe.FrameSystem, error) {
 	fsc, err := myRobot.FrameSystemConfig(ctx)
 	if err != nil {
 		return nil, err
