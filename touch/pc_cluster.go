@@ -193,7 +193,8 @@ func newCluster(ctx context.Context, deps resource.Dependencies, config resource
 		name: config.ResourceName(),
 		conf: newConf,
 	}
-	cs.cam, err = camera.FromDependencies(deps, newConf.Camera)
+	cs.cam, err = camera.FromProvider(deps, newConf.Camera)
+
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +232,7 @@ func (cs *ClusterService) GetObjectPointClouds(ctx context.Context, cameraName s
 		return nil, fmt.Errorf("bad cameraName %s", cameraName)
 	}
 
-	pc, err := cs.cam.NextPointCloud(ctx)
+	pc, err := cs.cam.NextPointCloud(ctx, extra)
 	if err != nil {
 		return nil, err
 	}

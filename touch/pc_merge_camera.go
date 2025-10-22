@@ -51,7 +51,7 @@ func newMerge(ctx context.Context, deps resource.Dependencies, config resource.C
 	}
 
 	for _, cn := range newConf.Cameras {
-		c, err := camera.FromDependencies(deps, cn)
+		c, err := camera.FromProvider(deps, cn)
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +76,7 @@ func (mapc *MergeCamera) Name() resource.Name {
 }
 
 func (mapc *MergeCamera) Image(ctx context.Context, mimeType string, extra map[string]interface{}) ([]byte, camera.ImageMetadata, error) {
-	pc, err := mapc.NextPointCloud(ctx)
+	pc, err := mapc.NextPointCloud(ctx, extra)
 	if err != nil {
 		return nil, camera.ImageMetadata{}, err
 	}
@@ -91,7 +91,7 @@ func (mapc *MergeCamera) Image(ctx context.Context, mimeType string, extra map[s
 }
 
 func (mapc *MergeCamera) Images(ctx context.Context, filterSourceNames []string, extra map[string]interface{}) ([]camera.NamedImage, resource.ResponseMetadata, error) {
-	pc, err := mapc.NextPointCloud(ctx)
+	pc, err := mapc.NextPointCloud(ctx, extra)
 	if err != nil {
 		return nil, resource.ResponseMetadata{}, err
 	}
@@ -108,13 +108,13 @@ func (mapc *MergeCamera) DoCommand(ctx context.Context, cmd map[string]interface
 	return nil, nil
 }
 
-func (mapc *MergeCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud, error) {
+func (mapc *MergeCamera) NextPointCloud(ctx context.Context, extra map[string]interface{}) (pointcloud.PointCloud, error) {
 	inputs := []pointcloud.PointCloud{}
 	totalSize := 0
 
 	for _, c := range mapc.cameras {
 
-		pc, err := c.NextPointCloud(ctx)
+		pc, err := c.NextPointCloud(ctx, extra)
 		if err != nil {
 			return nil, err
 		}

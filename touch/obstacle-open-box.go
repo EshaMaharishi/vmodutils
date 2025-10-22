@@ -131,7 +131,7 @@ func newObstacleOpenBox(ctx context.Context, deps resource.Dependencies, config 
 		if !ok {
 			return nil, fmt.Errorf("cannot find ToMove [%s]", newConf.ToMove)
 		}
-		o.motion, err = motion.FromDependencies(deps, newConf.motion())
+		o.motion, err = motion.FromProvider(deps, newConf.motion())
 		if err != nil {
 			return nil, err
 		}
