@@ -125,7 +125,7 @@ func HashCollisionSpecification(c motionplan.CollisionSpecification) int {
 func HashInputs(in []referenceframe.Input) int {
 	hash := 0
 	for i, v := range in {
-		hash += ((i + 7) * int(v.Value*10)) * (i + 11)
+		hash += ((i + 7) * int(v*10)) * (i + 11)
 	}
 	return hash
 }
