@@ -8,7 +8,7 @@ import (
 	"github.com/golang/geo/r3"
 
 	"go.viam.com/rdk/components/arm"
-	"go.viam.com/rdk/components/switch"
+	toggleswitch "go.viam.com/rdk/components/switch"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/referenceframe"
 	"go.viam.com/rdk/resource"
@@ -63,7 +63,7 @@ func newArmPositionSaver(ctx context.Context, deps resource.Dependencies, config
 		return nil, err
 	}
 
-	arm, err := arm.FromDependencies(deps, newConf.Arm)
+	arm, err := arm.FromProvider(deps, newConf.Arm)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func newArmPositionSaver(ctx context.Context, deps resource.Dependencies, config
 	}
 
 	if newConf.Motion != "" {
-		aps.motion, err = motion.FromDependencies(deps, newConf.Motion)
+		aps.motion, err = motion.FromProvider(deps, newConf.Motion)
 		if err != nil {
 			return nil, err
 		}

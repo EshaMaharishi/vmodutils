@@ -58,7 +58,7 @@ func newCropCamera(ctx context.Context, deps resource.Dependencies, config resou
 		logger: logger,
 	}
 
-	cc.src, err = camera.FromDependencies(deps, newConf.Src)
+	cc.src, err = camera.FromProvider(deps, newConf.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (cc *cropCamera) Name() resource.Name {
 }
 
 func (cc *cropCamera) Image(ctx context.Context, mimeType string, extra map[string]interface{}) ([]byte, camera.ImageMetadata, error) {
-	pc, err := cc.NextPointCloud(ctx)
+	pc, err := cc.NextPointCloud(ctx, extra)
 	if err != nil {
 		return nil, camera.ImageMetadata{}, err
 	}
@@ -108,7 +108,7 @@ func (cc *cropCamera) Image(ctx context.Context, mimeType string, extra map[stri
 }
 
 func (cc *cropCamera) Images(ctx context.Context, filterSourceNames []string, extra map[string]interface{}) ([]camera.NamedImage, resource.ResponseMetadata, error) {
-	pc, err := cc.NextPointCloud(ctx)
+	pc, err := cc.NextPointCloud(ctx, extra)
 	if err != nil {
 		return nil, resource.ResponseMetadata{}, err
 	}
@@ -129,7 +129,7 @@ func (cc *cropCamera) DoCommand(ctx context.Context, cmd map[string]interface{})
 	return nil, nil
 }
 
-func (cc *cropCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud, error) {
+func (cc *cropCamera) NextPointCloud(ctx context.Context, extra map[string]interface{}) (pointcloud.PointCloud, error) {
 
 	start := time.Now()
 	cc.lock.Lock()
@@ -141,7 +141,7 @@ func (cc *cropCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud
 	cc.active = true
 	cc.lock.Unlock()
 
-	pc, err := cc.doNextPointCloud(ctx)
+	pc, err := cc.doNextPointCloud(ctx, extra)
 
 	cc.lock.Lock()
 	cc.active = false
@@ -176,10 +176,10 @@ func (cc *cropCamera) waitForPointCloudAfter(ctx context.Context, when time.Time
 	}
 }
 
-func (cc *cropCamera) doNextPointCloud(ctx context.Context) (pointcloud.PointCloud, error) {
+func (cc *cropCamera) doNextPointCloud(ctx context.Context, extra map[string]interface{}) (pointcloud.PointCloud, error) {
 	start := time.Now()
 
-	pc, err := cc.src.NextPointCloud(ctx)
+	pc, err := cc.src.NextPointCloud(ctx, extra)
 	if err != nil {
 		return nil, err
 	}

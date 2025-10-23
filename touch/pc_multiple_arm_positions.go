@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"go.viam.com/rdk/components/camera"
-	"go.viam.com/rdk/components/switch"
+	toggleswitch "go.viam.com/rdk/components/switch"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/resource"
@@ -63,13 +63,13 @@ func newMultipleArmPoses(ctx context.Context, deps resource.Dependencies, config
 		positions: []toggleswitch.Switch{},
 	}
 
-	cc.src, err = camera.FromDependencies(deps, newConf.Src)
+	cc.src, err = camera.FromProvider(deps, newConf.Src)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, p := range newConf.Positions {
-		s, err := toggleswitch.FromDependencies(deps, p)
+		s, err := toggleswitch.FromProvider(deps, p)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +106,7 @@ func (mapc *MultipleArmPosesCamera) DoCommand(ctx context.Context, cmd map[strin
 	return nil, nil
 }
 
-func (mapc *MultipleArmPosesCamera) NextPointCloud(ctx context.Context) (pointcloud.PointCloud, error) {
+func (mapc *MultipleArmPosesCamera) NextPointCloud(ctx context.Context, extra map[string]interface{}) (pointcloud.PointCloud, error) {
 	inputs := []pointcloud.PointCloud{}
 	totalSize := 0
 
@@ -119,7 +119,7 @@ func (mapc *MultipleArmPosesCamera) NextPointCloud(ctx context.Context) (pointcl
 
 		time.Sleep(mapc.cfg.sleepTime())
 
-		pc, err := mapc.src.NextPointCloud(ctx)
+		pc, err := mapc.src.NextPointCloud(ctx, extra)
 		if err != nil {
 			return nil, err
 		}
