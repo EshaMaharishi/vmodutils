@@ -1,13 +1,17 @@
 package touch
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"image/color"
 	"math"
+	"time"
 
 	"github.com/golang/geo/r3"
 
+	"go.viam.com/rdk/components/camera"
+	toggleswitch "go.viam.com/rdk/components/switch"
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/spatialmath"
 )
@@ -214,4 +218,39 @@ func GetApproachPoint(p r3.Vector, deltaLinear float64, o *spatialmath.Orientati
 	}
 
 	return approachPoint
+}
+
+func GetMergedPointCloud(ctx context.Context, positions []toggleswitch.Switch, sleepTime time.Duration, src camera.Camera, extra map[string]interface{}) (pointcloud.PointCloud, error) {
+	inputs := []pointcloud.PointCloud{}
+	totalSize := 0
+
+	for _, p := range positions {
+
+		err := p.SetPosition(ctx, 2, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		time.Sleep(sleepTime)
+
+		pc, err := src.NextPointCloud(ctx, extra)
+		if err != nil {
+			return nil, err
+		}
+
+		totalSize += pc.Size()
+
+		inputs = append(inputs, pc)
+	}
+
+	big := pointcloud.NewBasicPointCloud(totalSize)
+
+	for _, pc := range inputs {
+		err := pointcloud.ApplyOffset(pc, nil, big)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return big, nil
 }
