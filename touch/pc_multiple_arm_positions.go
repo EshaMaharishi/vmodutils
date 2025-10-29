@@ -9,7 +9,9 @@ import (
 	toggleswitch "go.viam.com/rdk/components/switch"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
+	"go.viam.com/rdk/referenceframe"
 	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/robot/framesystem"
 	"go.viam.com/rdk/spatialmath"
 
 	"github.com/erh/vmodutils"
@@ -27,9 +29,10 @@ func init() {
 }
 
 type MultipleArmPosesConfig struct {
-	Src          string
-	SleepSeconds float64 `json:"sleep_seconds"`
-	Positions    []string
+	Src                   string
+	SleepSeconds          float64 `json:"sleep_seconds"`
+	Positions             []string
+	MergeUsingCameraFrame bool `json:"merge_using_camera_frame"`
 }
 
 func (c *MultipleArmPosesConfig) sleepTime() time.Duration {
@@ -75,6 +78,19 @@ func newMultipleArmPoses(ctx context.Context, deps resource.Dependencies, config
 		}
 		cc.positions = append(cc.positions, s)
 	}
+	cc.fsSvc, err = framesystem.FromDependencies(deps)
+	if err != nil {
+		return nil, err
+	}
+	fsConfig, err := cc.fsSvc.FrameSystemConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	cc.fs, err = referenceframe.NewFrameSystem("", fsConfig.Parts, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return cc, nil
 }
@@ -85,6 +101,9 @@ type MultipleArmPosesCamera struct {
 
 	name resource.Name
 	cfg  *MultipleArmPosesConfig
+
+	fsSvc framesystem.Service
+	fs    *referenceframe.FrameSystem
 
 	src       camera.Camera
 	positions []toggleswitch.Switch
@@ -107,7 +126,8 @@ func (mapc *MultipleArmPosesCamera) DoCommand(ctx context.Context, cmd map[strin
 }
 
 func (mapc *MultipleArmPosesCamera) NextPointCloud(ctx context.Context, extra map[string]interface{}) (pointcloud.PointCloud, error) {
-	return GetMergedPointCloud(ctx, mapc.positions, mapc.cfg.sleepTime(), mapc.src, extra)
+	return nil, fmt.Errorf("not supported")
+	//	return GetMergedPointCloud(ctx, mapc.positions, mapc.cfg.sleepTime(), mapc.src, extra)
 }
 
 func (mapc *MultipleArmPosesCamera) Properties(ctx context.Context) (camera.Properties, error) {
