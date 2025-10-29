@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/geo/r3"
 
+	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/components/camera"
 	toggleswitch "go.viam.com/rdk/components/switch"
 	"go.viam.com/rdk/pointcloud"
@@ -220,19 +221,20 @@ func GetApproachPoint(p r3.Vector, deltaLinear float64, o *spatialmath.Orientati
 	return approachPoint
 }
 
-func GetMergedPointCloud(ctx context.Context, positions []toggleswitch.Switch, sleepTime time.Duration, src camera.Camera, extra map[string]interface{}) (pointcloud.PointCloud, error) {
+func GetMergedPointCloud(ctx context.Context, positions []toggleswitch.Switch, sleepTime time.Duration, src camera.Camera, extra map[string]interface{}, logger logging.Logger) (pointcloud.PointCloud, error) {
+	logger.Infof("in GetMergedPointCloud")
 	inputs := []pointcloud.PointCloud{}
 	totalSize := 0
 
 	for _, p := range positions {
-
+		logger.Infof("about to move to position")
 		err := p.SetPosition(ctx, 2, nil)
 		if err != nil {
 			return nil, err
 		}
 
 		time.Sleep(sleepTime)
-
+		logger.Info("about to take point cloud image")
 		pc, err := src.NextPointCloud(ctx, extra)
 		if err != nil {
 			return nil, err

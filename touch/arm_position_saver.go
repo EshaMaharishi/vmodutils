@@ -200,7 +200,8 @@ func (aps *ArmPositionSaver) saveCurrentPosition(ctx context.Context) error {
 
 func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
        if len(aps.cfg.Joints) > 0 && aps.motion != nil {
-               // if you specify both joints & a motion service
+		aps.logger.Infof("using joint to joint motion")
+	       // if you specify both joints & a motion service
                // move from joint to joint avoiding obstacles
                worldState := referenceframe.NewEmptyWorldState()
                if len(aps.visionServices) > 0 {
@@ -227,14 +228,16 @@ func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
 
                extra := map[string]any{}
                maps.Copy(extra, aps.cfg.Extra)
-
+		aps.logger.Infof("getting current inputs")
                // specify start state to ensure the arm is in the joint configuration
                // fsSvc.CurrentInputs lead us to believe it was in
                currentInputs, err := aps.fsSvc.CurrentInputs(ctx)
                if err != nil {
-                       return err
+			aps.logger.Infof("currentInputs got error")
+		       return err
                }
-               if _, ok := currentInputs[aps.arm.Name().Name]; !ok {
+		aps.logger.Infof("checking current inputs for arm name")
+	       if _, ok := currentInputs[aps.arm.Name().Name]; !ok {
                        return fmt.Errorf("expected arm %s to be returned from framesystem service CurrentInputs", aps.arm.Name().Name)
                }
                extra["start_state"] = armplanning.NewPlanState(nil, currentInputs).Serialize()
@@ -244,18 +247,19 @@ func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
                goalFrameSystemInputs := currentInputs
                goalFrameSystemInputs[aps.arm.Name().Name] = aps.cfg.Joints
                extra["goal_state"] = armplanning.NewPlanState(nil, goalFrameSystemInputs).Serialize()
-               _, err = aps.motion.Move(ctx, motion.MoveReq{
+		aps.logger.Infof("calling motion.Move")
+
+	       _, err = aps.motion.Move(ctx, motion.MoveReq{
                        ComponentName: aps.cfg.Arm,
                        WorldState:    worldState,
                        Extra:         extra,
                })
                return err
-       }
-	if len(aps.cfg.Joints) > 0 {
-		return aps.arm.MoveToJointPositions(ctx, aps.cfg.Joints, aps.cfg.Extra)
-	}
-
-	if aps.motion != nil {
+       } else if len(aps.cfg.Joints) > 0 {
+		aps.logger.Infof("using MoveToJointPositions")
+	       return aps.arm.MoveToJointPositions(ctx, aps.cfg.Joints, aps.cfg.Extra)
+	} else if aps.motion != nil {
+		aps.logger.Infof("using cartesian motion")
 		current, err := aps.fsSvc.GetPose(ctx, aps.cfg.Arm, "world", nil, nil)
 		if err != nil {
 			return err
