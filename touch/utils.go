@@ -11,9 +11,11 @@ import (
 
 	"go.viam.com/rdk/components/camera"
 	toggleswitch "go.viam.com/rdk/components/switch"
+    "go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/robot/framesystem"
 	"go.viam.com/rdk/spatialmath"
+    "go.viam.com/utils/trace"
 )
 
 func PCFindHighestInRegion(pc pointcloud.PointCloud, box image.Rectangle) r3.Vector {
@@ -223,9 +225,16 @@ func GetApproachPoint(p r3.Vector, deltaLinear float64, o *spatialmath.Orientati
 	return approachPoint
 }
 
-func GetMergedPointCloud(ctx context.Context, positions []toggleswitch.Switch, sleepTime time.Duration, srcCamera camera.Camera, extraForCamera map[string]interface{}, fsSvc framesystem.Service) (pointcloud.PointCloud, error) {
+func GetMergedPointCloud(ctx context.Context, positions []toggleswitch.Switch, sleepTime time.Duration, srcCamera camera.Camera, extraForCamera map[string]interface{}, fsSvc framesystem.Service, logger logging.Logger) (pointcloud.PointCloud, error) {
 	pcsInWorld := []pointcloud.PointCloud{}
 	totalSize := 0
+
+	if span := trace.FromContext(ctx); span != nil {
+		traceID := span.SpanContext().TraceID().String()
+		logger.Infof("Trace ID: %s", traceID)
+	} else {
+		logger.Infof("no Trace ID")
+	}
 
 	for _, p := range positions {
 		err := p.SetPosition(ctx, 2, nil)

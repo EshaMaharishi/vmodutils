@@ -17,6 +17,7 @@ import (
 	"go.viam.com/rdk/services/vision"
 	"go.viam.com/rdk/spatialmath"
 	"go.viam.com/rdk/utils"
+    "go.viam.com/utils/trace"
 
 	"github.com/erh/vmodutils"
 )
@@ -143,6 +144,13 @@ func (aps *ArmPositionSaver) DoCommand(ctx context.Context, cmd map[string]inter
 }
 
 func (aps *ArmPositionSaver) SetPosition(ctx context.Context, position uint32, extra map[string]interface{}) error {
+    if span := trace.FromContext(ctx); span != nil {
+            traceID := span.SpanContext().TraceID().String()
+            aps.logger.Infof("Trace ID: %s", traceID)
+    } else {
+        aps.logger.Infof("no Trace ID")
+    }
+
 	if position == 0 {
 		return nil
 	}
@@ -210,6 +218,13 @@ func (aps *ArmPositionSaver) buildWorldStateWithObstacles(ctx context.Context) (
 }
 
 func (aps *ArmPositionSaver) goToSavePosition(ctx context.Context) error {
+    if span := trace.FromContext(ctx); span != nil {
+            traceID := span.SpanContext().TraceID().String()
+            aps.logger.Infof("Trace ID: %s", traceID)
+    } else {
+        aps.logger.Infof("no Trace ID")
+    }
+
 	if len(aps.cfg.Joints) > 0 {
 		if aps.motion != nil {
 			aps.logger.Debugf("using joint to joint motion")
