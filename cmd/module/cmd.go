@@ -7,11 +7,14 @@ import (
 	"go.viam.com/rdk/module"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/services/vision"
+    "go.viam.com/utils/trace"
+    otelresource "go.opentelemetry.io/otel/sdk/resource"
 
 	"github.com/erh/vmodutils/touch"
 )
 
 func main() {
+    trace.SetTracerWithExporters(otelresource.Empty())
 	module.ModularMain(
 		resource.APIModel{camera.API, touch.CropCameraModel},
 		resource.APIModel{camera.API, touch.DetectCropCameraModel},
