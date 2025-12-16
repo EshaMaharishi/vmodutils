@@ -320,6 +320,12 @@ func GetMergedPointCloudFromPositions(ctx context.Context, positions []toggleswi
 		}
 	}
 
+    if traceID != "" {
+        // Save merged pcd
+		if err := file_utils.SavePointCloudFile(mergedPc, "merged.pcd", traceID, time.Now()); err != nil {
+			return nil, err
+		}
+    }
 	return big, nil
 }
 
