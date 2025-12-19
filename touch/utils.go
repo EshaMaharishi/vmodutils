@@ -236,7 +236,7 @@ func GetMergedPointCloudFromPositions(ctx context.Context, positions []toggleswi
 	pcsInWorld := []pointcloud.PointCloud{}
 	totalSize := 0
 
-	// If a traceID is present, we will write files to a sub-directory in the capture directory.
+	// If a traceID is present, we will write files to a traceID sub-directory in the capture directory.
 	// Otherwise, we will write files at the top-level of the capture directory.
 	var traceID string
 	if span := trace.FromContext(ctx); span != nil {
