@@ -12,17 +12,12 @@ import (
 
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/rimage"
+	"go.viam.com/rdk/services/datamanager/builtin/shared"
 	rutils "go.viam.com/rdk/utils"
 )
 
-const captureDirEnvVar = "VIAM_CAPTURE_DIR"
-
 func GetPathInCaptureDir(subDirName string) (string, error) {
-	captureDir, ok := os.LookupEnv(captureDirEnvVar)
-	if !ok {
-		return "", fmt.Errorf("%s environment variable needs to be set in order to save files", captureDirEnvVar)
-	}
-	return filepath.Join(captureDir, subDirName), nil
+	return filepath.Join(shared.ViamCaptureDotDir, subDirName), nil
 }
 
 // EnsureDirExists creates the target directory path if it does not exist
