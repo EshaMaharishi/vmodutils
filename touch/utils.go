@@ -303,7 +303,7 @@ func GetMergedPointCloudFromPositions(ctx context.Context, positions []toggleswi
 				}
 
 				capturedAt := imagesMd.CapturedAt.Format("January_02_2006_15_04_05")
-				filenameWithoutExtension := "imaging_" + capturedAt + "_" + strconv.Itoa(i)
+				filenameWithoutExtension := "imaging_" + im.SourceName + "_" + capturedAt + "_" + strconv.Itoa(i)
 				err = file_utils.SaveImageFile(rawImage, dirPath, filenameWithoutExtension, time.Now())
 				if err != nil {
 					return nil, err
