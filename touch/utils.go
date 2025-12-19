@@ -29,7 +29,6 @@ import (
 func PCFindHighestInRegion(pc pointcloud.PointCloud, box image.Rectangle) r3.Vector {
 
 	best := r3.Vector{Z: -100000}
-
 	pc.Iterate(0, 0, func(p r3.Vector, d pointcloud.Data) bool {
 		if p.Z > best.Z {
 			if p.X >= float64(box.Min.X) && p.Y >= float64(box.Min.Y) {
@@ -233,7 +232,7 @@ func GetApproachPoint(p r3.Vector, deltaLinear float64, o *spatialmath.Orientati
 	return approachPoint
 }
 
-func GetMergedPointCloudFromPositions(ctx context.Context, positions []toggleswitch.Switch, sleepTime time.Duration, srcCamera camera.Camera, extraForCamera map[string]interface{}, fsSvc framesystem.Service) (pointcloud.PointCloud, error) {
+func GetMergedPointCloudFromPositions(ctx context.Context, positions []toggleswitch.Switch, sleepTime time.Duration, srcCamera camera.Camera, extraForCamera map[string]interface{}, fsSvc framesystem.Service, writeFilesToCaptureDirectory bool) (pointcloud.PointCloud, error) {
 	pcsInWorld := []pointcloud.PointCloud{}
 	totalSize := 0
 
@@ -271,7 +270,9 @@ func GetMergedPointCloudFromPositions(ctx context.Context, positions []toggleswi
 
 		pcsInWorld = append(pcsInWorld, pcInWorld)
 
-		if traceID != "" {
+		if writeFilesToCaptureDirectory {
+			// If a traceID is present, we will write files to a sub-directory in the capture directory.
+			// Otherwise, we will write files at the top-level of the capture directory.
 			dirPath, err := file_utils.GetPathInCaptureDir(traceID)
 			if err != nil {
 				return nil, err
