@@ -274,10 +274,7 @@ func GetMergedPointCloudFromPositions(ctx context.Context, positions []toggleswi
 		pcsInWorld = append(pcsInWorld, pcInWorld)
 
 		if writeFilesToCaptureDirectory {
-			dirPath, err := file_utils.GetPathInCaptureDir(traceID)
-			if err != nil {
-				return nil, err
-			}
+			dirPath := file_utils.GetPathInCaptureDir(traceID)
 
 			// Save pcd from camera in camera frame
 			if err := file_utils.SavePointCloudFile(pc, dirPath, "imaging_camera_frame_"+strconv.Itoa(i)+".pcd", time.Now()); err != nil {
@@ -326,10 +323,7 @@ func GetMergedPointCloudFromPositions(ctx context.Context, positions []toggleswi
 	}
 
 	if writeFilesToCaptureDirectory {
-		dirPath, err := file_utils.GetPathInCaptureDir(traceID)
-		if err != nil {
-			return nil, err
-		}
+		dirPath := file_utils.GetPathInCaptureDir(traceID)
 
 		// Save merged pcd
 		if err := file_utils.SavePointCloudFile(big, dirPath, "merged.pcd", time.Now()); err != nil {

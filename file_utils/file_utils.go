@@ -16,8 +16,8 @@ import (
 	rutils "go.viam.com/rdk/utils"
 )
 
-func GetPathInCaptureDir(subDirName string) (string, error) {
-	return filepath.Join(shared.ViamCaptureDotDir, subDirName), nil
+func GetPathInCaptureDir(subDirName string) string {
+	return filepath.Join(shared.ViamCaptureDotDir, subDirName)
 }
 
 // EnsureDirExists creates the target directory path if it does not exist
