@@ -200,7 +200,7 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 	joints := maps.cfg.JointsList[position]
 
 	if maps.motion != nil {
-		return goToPositionUsingJointToJointMotion(ctx, joints, maps.arm.Name().Name, maps.motion, maps.visionServices, maps.cfg.Extra, maps.logger)
+		return goToPositionUsingJointToJointMotion(ctx, joints, maps.arm, maps.motion, maps.visionServices, maps.cfg.Extra, maps.cfg.WriteFilesToCaptureDirectory, fmt.Sprintf("%s_%d", maps.name.Name, position), maps.logger)
 	}
 	return goToPositionUsingMoveToJointPositions(ctx, joints, maps.arm, maps.cfg.Extra, maps.logger)
 }
