@@ -217,7 +217,7 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 		// Write the actual joint position we ended up at
 		curInputs, err := maps.arm.CurrentInputs(ctx)
 		if err != nil {
-			return multierr.Combine(errs, err)
+			return errors.Join(errs, err)
 		}
 		actual_position_filename := fmt.Sprintf("%s_joint_position_%d_actual.json", maps.name.Name, position)
 		if err := file_utils.SaveJsonFile(curInputs, dirPath, actual_position_filename, time.Now()); err != nil {
