@@ -210,8 +210,7 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 		err := goToPositionUsingJointToJointMotion(ctx, joints, maps.arm.Name().Name, maps.motion, maps.visionServices, maps.cfg.Extra, maps.logger)
 		errs = multierr.Combine(errs, err)
 	} else {
-		err := goToPositionUsingMoveToJointPositions(ctx, joints, maps.arm, maps.cfg.Extra, maps.logger)
-		errs = multierr.Combine(errs, err)
+		errs = goToPositionUsingMoveToJointPositions(ctx, joints, maps.arm, maps.cfg.Extra, maps.logger)
 	}
 
 	if maps.cfg.WriteFilesToCaptureDirectory {
