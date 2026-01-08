@@ -204,24 +204,24 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 		}
 	}
 
-	var errs error
+	var moveErr error
 	if maps.motion != nil {
-		errs = goToPositionUsingJointToJointMotion(ctx, joints, maps.arm.Name().Name, maps.motion, maps.visionServices, maps.cfg.Extra, maps.logger)
+		moveErr = goToPositionUsingJointToJointMotion(ctx, joints, maps.arm.Name().Name, maps.motion, maps.visionServices, maps.cfg.Extra, maps.logger)
 	} else {
-		errs = goToPositionUsingMoveToJointPositions(ctx, joints, maps.arm, maps.cfg.Extra, maps.logger)
+		moveErr = goToPositionUsingMoveToJointPositions(ctx, joints, maps.arm, maps.cfg.Extra, maps.logger)
 	}
 
 	if maps.cfg.WriteFilesToCaptureDirectory {
 		// Write the actual joint position we ended up at
 		curInputs, err := maps.arm.CurrentInputs(ctx)
 		if err != nil {
-			return errors.Join(errs, err)
+			return errors.Join(moveErr, err)
 		}
 		actual_position_filename := fmt.Sprintf("%s_joint_position_%d_actual.json", maps.name.Name, position)
 		if err := file_utils.SaveJsonFile(curInputs, dirPath, actual_position_filename, time.Now()); err != nil {
-			return errors.Join(errs, err)
+			return errors.Join(moveErr, err)
 		}
 	}
 
-	return errs
+	return moveErr
 }
