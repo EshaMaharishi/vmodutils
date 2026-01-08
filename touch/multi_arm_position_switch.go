@@ -206,8 +206,7 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 
 	var errs error
 	if maps.motion != nil {
-		err := goToPositionUsingJointToJointMotion(ctx, joints, maps.arm.Name().Name, maps.motion, maps.visionServices, maps.cfg.Extra, maps.logger)
-		errs = errors.Join(errs, err)
+		errs = goToPositionUsingJointToJointMotion(ctx, joints, maps.arm.Name().Name, maps.motion, maps.visionServices, maps.cfg.Extra, maps.logger)
 	} else {
 		errs = goToPositionUsingMoveToJointPositions(ctx, joints, maps.arm, maps.cfg.Extra, maps.logger)
 	}
