@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.uber.org/multierr"
 	"go.viam.com/rdk/components/arm"
 	toggleswitch "go.viam.com/rdk/components/switch"
 	"go.viam.com/rdk/logging"
@@ -208,7 +207,7 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 	var errs error
 	if maps.motion != nil {
 		err := goToPositionUsingJointToJointMotion(ctx, joints, maps.arm.Name().Name, maps.motion, maps.visionServices, maps.cfg.Extra, maps.logger)
-		errs = multierr.Combine(errs, err)
+		errs = errors.Join(errs, err)
 	} else {
 		errs = goToPositionUsingMoveToJointPositions(ctx, joints, maps.arm, maps.cfg.Extra, maps.logger)
 	}
