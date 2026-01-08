@@ -16,7 +16,6 @@ import (
 	"go.viam.com/rdk/robot/framesystem"
 	"go.viam.com/rdk/services/motion"
 	"go.viam.com/rdk/services/vision"
-	"go.viam.com/utils/trace"
 
 	"github.com/erh/vmodutils"
 	"github.com/erh/vmodutils/file_utils"
@@ -182,13 +181,11 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 	}
 	defer maps.executing.Store(false)
 
-	traceID := ""
-	if span := trace.FromContext(ctx); span != nil {
-		traceID = span.SpanContext().TraceID().String()
-	} else if maps.cfg.WriteFilesToCaptureDirectory {
-		maps.logger.Warnf("no traceID set, writing files directly to capture directory", maps.name.Name)
-	}
+	traceID := getTraceID(ctx)
 	dirPath := file_utils.GetPathInCaptureDir(traceID)
+	if traceID == "" && maps.cfg.WriteFilesToCaptureDirectory {
+		maps.logger.Warnf("no traceID set, will write files directly to capture directory")
+	}
 
 	maps.updatePosition(position)
 
@@ -196,7 +193,7 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 
 	if maps.cfg.WriteFilesToCaptureDirectory {
 		// Write the config
-		fileName := fmt.Sprintf("%s_%s", maps.name.Name, "config.json")
+		fileName := fmt.Sprintf("%s_config.json", maps.name.Name)
 		if err := file_utils.SaveJsonFile(maps.cfg, dirPath, fileName, time.Now()); err != nil {
 			return err
 		}
@@ -218,8 +215,6 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 	}
 
 	if maps.cfg.WriteFilesToCaptureDirectory {
-		dirPath := file_utils.GetPathInCaptureDir(traceID)
-
 		// Write the actual joint position we ended up at
 		curInputs, err := maps.arm.CurrentInputs(ctx)
 		if err != nil {
