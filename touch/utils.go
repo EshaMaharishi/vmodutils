@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/golang/geo/r3"
-	"go.uber.org/multierr"
 
 	"go.viam.com/rdk/components/arm"
 	"go.viam.com/rdk/components/camera"
@@ -363,12 +362,10 @@ func buildWorldStateWithObstacles(ctx context.Context, visionSvcs []vision.Servi
 func goToPositionUsingJointToJointMotion(
 	ctx context.Context,
 	joints []float64,
-	arm arm.Arm,
+	armName string,
 	motionSvc motion.Service,
 	visionSvcs []vision.Service,
 	extra map[string]any,
-	writeFilesToCaptureDirectory bool,
-	why string,
 	logger logging.Logger,
 ) error {
 	logger.Debugf("going to position using joint to joint motion")
@@ -381,7 +378,7 @@ func goToPositionUsingJointToJointMotion(
 
 	// Express the goal state in joint positions
 	goalFrameSystemInputs := make(referenceframe.FrameSystemInputs)
-	goalFrameSystemInputs[arm.Name().Name] = joints
+	goalFrameSystemInputs[armName] = joints
 	if extra == nil {
 		extra = make(map[string]any)
 	} else if extra[extraParamsKeyGoalState] != nil {
@@ -390,46 +387,12 @@ func goToPositionUsingJointToJointMotion(
 	extra[extraParamsKeyGoalState] = serialize(goalFrameSystemInputs)
 
 	// Call Motion.Move
-	var errs error
-	moveReq := motion.MoveReq{
-		ComponentName: arm.Name().Name,
+	_, err = motionSvc.Move(ctx, motion.MoveReq{
+		ComponentName: armName,
 		WorldState:    worldState,
 		Extra:         extra,
-	}
-	_, err = motionSvc.Move(ctx, moveReq)
-	errs = multierr.Combine(errs, err)
-
-	if writeFilesToCaptureDirectory {
-		var traceID string
-		if span := trace.FromContext(ctx); span != nil {
-			traceID = span.SpanContext().TraceID().String()
-		}
-		dirPath := file_utils.GetPathInCaptureDir(traceID)
-
-		// Write the move request
-		move_req_filename := fmt.Sprintf("%s_move_request.json", why)
-		if err := file_utils.SaveJsonFile(moveReq, dirPath, move_req_filename, time.Now()); err != nil {
-			return multierr.Combine(errs, err)
-		}
-
-		// Write the goal joint position
-		goal_filename := fmt.Sprintf("%s_joint_position_goal.json", why)
-		if err := file_utils.SaveJsonFile(joints, dirPath, goal_filename, time.Now()); err != nil {
-			return multierr.Combine(errs, err)
-		}
-
-		// Write the actual joint position we ended up at
-		curInputs, err := arm.CurrentInputs(ctx)
-		if err != nil {
-			return multierr.Combine(errs, err)
-		}
-		actual_position_filename := fmt.Sprintf("%s_joint_position_actual.json", why)
-		if err := file_utils.SaveJsonFile(curInputs, dirPath, actual_position_filename, time.Now()); err != nil {
-			return multierr.Combine(errs, err)
-		}
-	}
-
-	return errs
+	})
+	return err
 }
 
 func goToPositionUsingMoveToJointPositions(

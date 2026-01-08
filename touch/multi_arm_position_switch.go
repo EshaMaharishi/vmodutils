@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.uber.org/multierr"
 	"go.viam.com/rdk/components/arm"
 	toggleswitch "go.viam.com/rdk/components/switch"
 	"go.viam.com/rdk/logging"
@@ -180,27 +181,55 @@ func (maps *MultiArmPositionSwitch) goToPosition(ctx context.Context, position u
 		return errors.New("switch is currently executing")
 	}
 	defer maps.executing.Store(false)
-	if maps.cfg.WriteFilesToCaptureDirectory {
-		traceID := ""
-		if span := trace.FromContext(ctx); span != nil {
-			traceID = span.SpanContext().TraceID().String()
-		}
-		dirPath := file_utils.GetPathInCaptureDir(traceID)
 
-		if traceID == "" {
-			maps.logger.Warnf("no traceID set, writing resource config file for %s without traceID in capture directory", maps.name.Name)
-		}
-
-		fileName := fmt.Sprintf("%s_%s", maps.name.Name, "config.json")
-		file_utils.SaveJsonFile(maps.cfg, dirPath, fileName, time.Now())
+	traceID := ""
+	if span := trace.FromContext(ctx); span != nil {
+		traceID = span.SpanContext().TraceID().String()
+	} else if maps.cfg.WriteFilesToCaptureDirectory {
+		maps.logger.Warnf("no traceID set, writing files directly to capture directory", maps.name.Name)
 	}
+	dirPath := file_utils.GetPathInCaptureDir(traceID)
 
 	maps.updatePosition(position)
 
 	joints := maps.cfg.JointsList[position]
 
-	if maps.motion != nil {
-		return goToPositionUsingJointToJointMotion(ctx, joints, maps.arm, maps.motion, maps.visionServices, maps.cfg.Extra, maps.cfg.WriteFilesToCaptureDirectory, fmt.Sprintf("%s_%d", maps.name.Name, position), maps.logger)
+	if maps.cfg.WriteFilesToCaptureDirectory {
+		// Write the config
+		fileName := fmt.Sprintf("%s_%s", maps.name.Name, "config.json")
+		if err := file_utils.SaveJsonFile(maps.cfg, dirPath, fileName, time.Now()); err != nil {
+			return err
+		}
+
+		// Write the goal joint position
+		goal_filename := fmt.Sprintf("%s_joint_position_goal.json", maps.name.Name)
+		if err := file_utils.SaveJsonFile(joints, dirPath, goal_filename, time.Now()); err != nil {
+			return err
+		}
 	}
-	return goToPositionUsingMoveToJointPositions(ctx, joints, maps.arm, maps.cfg.Extra, maps.logger)
+
+	var errs error
+	if maps.motion != nil {
+		err := goToPositionUsingJointToJointMotion(ctx, joints, maps.arm.Name().Name, maps.motion, maps.visionServices, maps.cfg.Extra, maps.logger)
+		errs = multierr.Combine(errs, err)
+	} else {
+		err := goToPositionUsingMoveToJointPositions(ctx, joints, maps.arm, maps.cfg.Extra, maps.logger)
+		errs = multierr.Combine(errs, err)
+	}
+
+	if maps.cfg.WriteFilesToCaptureDirectory {
+		dirPath := file_utils.GetPathInCaptureDir(traceID)
+
+		// Write the actual joint position we ended up at
+		curInputs, err := maps.arm.CurrentInputs(ctx)
+		if err != nil {
+			return multierr.Combine(errs, err)
+		}
+		actual_position_filename := fmt.Sprintf("%s_joint_position_actual.json", maps.name.Name)
+		if err := file_utils.SaveJsonFile(curInputs, dirPath, actual_position_filename, time.Now()); err != nil {
+			return multierr.Combine(errs, err)
+		}
+	}
+
+	return errs
 }
